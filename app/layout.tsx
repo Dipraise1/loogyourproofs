@@ -62,16 +62,16 @@ export const metadata: Metadata = {
     description: 'Build your immutable freelancer portfolio on the blockchain. Verify your work, earn endorsements, and establish your Web3 reputation with SaveYourProofs.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/image.png',
         width: 1200,
         height: 630,
-        alt: 'SaveYourProofs - Decentralized Freelancer Platform',
+        alt: 'SaveYourProofs - Decentralized Freelancer Platform Logo',
         type: 'image/png',
       },
       {
-        url: '/og-image-square.png',
-        width: 1200,
-        height: 1200,
+        url: '/image.png',
+        width: 512,
+        height: 512,
         alt: 'SaveYourProofs Logo',
         type: 'image/png',
       }
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     creator: '@SaveYourProofs',
     title: 'SaveYourProofs - Web3 Freelancer Portfolio Platform',
     description: 'Create immutable proof-of-work portfolios on the blockchain. Join the future of freelancing with Web3.',
-    images: ['/twitter-image.png'],
+    images: ['/image.png'],
   },
   robots: {
     index: true,
@@ -110,6 +110,15 @@ export const metadata: Metadata = {
   other: {
     'msapplication-TileColor': '#8b5cf6',
     'theme-color': '#8b5cf6',
+  },
+  icons: {
+    icon: '/image.png',
+    shortcut: '/image.png',
+    apple: '/image.png',
+    other: {
+      rel: 'apple-touch-icon-precomposed',
+      url: '/image.png',
+    },
   }
 }
 
@@ -148,7 +157,12 @@ export default function RootLayout({
       '@type': 'Organization',
       name: 'SaveYourProofs',
       url: siteUrl,
-      logo: `${siteUrl}/logo.png`,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/image.png`,
+        width: 512,
+        height: 512
+      },
       sameAs: [
         'https://twitter.com/SaveYourProofs',
         'https://github.com/SaveYourProofs',
@@ -161,7 +175,8 @@ export default function RootLayout({
       description: 'Immutable proof-of-work verification system for freelancers',
       provider: {
         '@type': 'Organization',
-        name: 'SaveYourProofs'
+        name: 'SaveYourProofs',
+        logo: `${siteUrl}/image.png`
       },
       areaServed: 'Worldwide',
       availableLanguage: 'English'
@@ -183,7 +198,8 @@ export default function RootLayout({
         name: 'Connect Wallet'
       }
     ],
-    keywords: 'web3, blockchain, freelancer, portfolio, proof-of-work, solana, ethereum, ipfs, decentralized'
+    keywords: 'web3, blockchain, freelancer, portfolio, proof-of-work, solana, ethereum, ipfs, decentralized',
+    image: `${siteUrl}/image.png`
   }
 
   return (
@@ -194,9 +210,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         {/* Favicons and app icons */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/image.png" sizes="any" />
+        <link rel="icon" href="/image.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/image.png" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* PWA meta tags */}
@@ -238,7 +254,9 @@ export default function RootLayout({
                 '@type': 'Offer',
                 price: '0',
                 priceCurrency: 'USD'
-              }
+              },
+              image: `${siteUrl}/image.png`,
+              logo: `${siteUrl}/image.png`
             })
           }}
         />
