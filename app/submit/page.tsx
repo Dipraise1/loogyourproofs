@@ -1,3 +1,19 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Submit Proof of Work - SaveYourProofs',
+  description: 'Submit your work evidence to the blockchain. Upload files, add descriptions, connect GitHub repos, and create immutable proof-of-work records on SaveYourProofs.',
+  keywords: ['submit proof of work', 'blockchain verification', 'freelancer portfolio', 'upload work evidence', 'web3 submission', 'decentralized proof'],
+  openGraph: {
+    title: 'Submit Your Work Proof | SaveYourProofs',
+    description: 'Create immutable records of your completed work. Upload evidence, add descriptions, and build your Web3 freelancer reputation.',
+  },
+  twitter: {
+    title: 'Submit Work Proof | SaveYourProofs',
+    description: 'Upload your work evidence to the blockchain and build your decentralized freelancer portfolio.',
+  },
+}
+
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
