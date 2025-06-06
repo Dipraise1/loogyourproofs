@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Search, Plus, User, Shield, Zap, Home } from 'lucide-react';
 import Link from 'next/link';
 import { WalletConnect } from './WalletConnect';
+import Image from 'next/image';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,11 +42,18 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group" onClick={closeMenu}>
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 group-hover:shadow-lg group-hover:shadow-purple-500/25">
-                <img 
+              <div className="w-8 h-8 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 group-hover:shadow-lg group-hover:shadow-purple-500/25 bg-purple-600/20 border border-purple-500/30 relative">
+                <Image 
                   src="/image.png" 
                   alt="SaveYourProofs Logo" 
-                  className="w-full h-full object-cover"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-contain"
+                  onLoad={() => console.log('Logo loaded successfully')}
+                  onError={(e) => {
+                    console.error('Logo failed to load:', e);
+                  }}
+                  priority
                 />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
