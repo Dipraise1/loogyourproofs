@@ -199,7 +199,8 @@ export const useAppStore = create<AppState>()(
           
           set({ isLoading: false });
         } catch (error) {
-          set({ error: `Failed to load proofs: ${error.message}`, isLoading: false });
+          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+          set({ error: `Failed to load proofs: ${errorMessage}`, isLoading: false });
         }
       },
 
@@ -219,7 +220,8 @@ export const useAppStore = create<AppState>()(
           
           set({ isLoading: false });
         } catch (error) {
-          set({ error: `Failed to load proofs: ${error.message}`, isLoading: false });
+          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+          set({ error: `Failed to load proofs: ${errorMessage}`, isLoading: false });
         }
       },
 
@@ -239,7 +241,8 @@ export const useAppStore = create<AppState>()(
           
           set({ isLoading: false });
         } catch (error) {
-          set({ error: `Failed to load freelancers: ${error.message}`, isLoading: false });
+          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+          set({ error: `Failed to load freelancers: ${errorMessage}`, isLoading: false });
         }
       },
 
