@@ -22,6 +22,7 @@ import {
 import Link from 'next/link';
 import { Header } from '../components/Header';
 import { WalletConnect } from '../components/WalletConnect';
+import { PublicDataStats } from '../components/PublicDataStats';
 import { useAppStore } from '../../lib/store';
 import { proofService } from '../../lib/proof-service';
 
@@ -224,6 +225,37 @@ export default function DashboardPage() {
                       <div className="text-sm text-gray-400">Total Endorsements</div>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+
+              {/* Public Data Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <div className="lg:col-span-3">
+                  <div className="glass-panel p-6">
+                    <h3 className="text-lg font-semibold text-purple-300 mb-4">Public Data Access</h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                      All user data is stored on IPFS and publicly accessible. Anyone can verify your work history and contributions to the freelancer ecosystem.
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="px-2 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-200">
+                        Decentralized Storage
+                      </span>
+                      <span className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded text-blue-200">
+                        Immutable Records
+                      </span>
+                      <span className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded text-green-200">
+                        Publicly Verifiable
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <PublicDataStats />
                 </div>
               </motion.div>
 

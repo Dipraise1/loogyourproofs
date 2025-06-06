@@ -2,6 +2,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { ipfsService, ProofMetadata, IPFSUploadResult } from './ipfs';
 import { SolanaService, ProofRecord } from './blockchain';
 import { Proof, Attachment, useAppStore } from './store';
+import { publicDataService } from './public-data-service';
 import toast from 'react-hot-toast';
 
 export interface SubmissionData {
@@ -142,6 +143,24 @@ export class ProofSubmissionService {
 
       // Save to localStorage for persistence
       this.saveProofToStorage(completedProof);
+
+      // Store publicly on IPFS for global access
+      try {
+        toast.loading('Making data publicly accessible...', { id: proofId + '_public' });
+        await publicDataService.storeProofPublic(completedProof);
+        
+        // Also ensure freelancer profile is publicly stored
+        const { freelancers } = useAppStore.getState();
+        const freelancer = freelancers.find(f => f.walletAddress === walletAddress);
+        if (freelancer) {
+          await publicDataService.storeFreelancerPublic(freelancer);
+        }
+        
+        toast.success('Data stored publicly on IPFS!', { id: proofId + '_public' });
+      } catch (publicError) {
+        console.warn('Public storage failed, but proof was saved locally:', publicError);
+        toast.error('Public storage failed, but proof was saved locally', { id: proofId + '_public' });
+      }
 
       toast.success('Proof submitted successfully!', { id: proofId });
       return completedProof;

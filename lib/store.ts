@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ProofRecord, EndorsementRecord } from './blockchain';
 import { ProofMetadata } from './ipfs';
+import { publicDataService } from './public-data-service';
 
 export interface Attachment {
   id: string;
@@ -249,18 +250,22 @@ export const useAppStore = create<AppState>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Load from localStorage first for instant display
-          const stored = localStorage.getItem(`proofs_${walletAddress}`);
-          if (stored) {
-            const userProofs = JSON.parse(stored);
-            set({ userProofs });
-          }
-
-          // Then load from blockchain (would be real blockchain calls)
-          // For now, we'll simulate the loading
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Load from public IPFS first, then fallback to localStorage
+          let userProofs: Proof[] = [];
           
-          set({ isLoading: false });
+          try {
+            userProofs = await publicDataService.getFreelancerPublicProofs(walletAddress);
+            console.log(`Loaded ${userProofs.length} proofs from public IPFS for ${walletAddress}`);
+          } catch (publicError) {
+            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
+            // Fallback to localStorage
+            const stored = localStorage.getItem(`proofs_${walletAddress}`);
+            if (stored) {
+              userProofs = JSON.parse(stored);
+            }
+          }
+          
+          set({ userProofs, isLoading: false });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
           set({ error: `Failed to load proofs: ${errorMessage}`, isLoading: false });
@@ -271,17 +276,22 @@ export const useAppStore = create<AppState>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Load cached proofs first
-          const stored = localStorage.getItem('all_proofs');
-          if (stored) {
-            const proofs = JSON.parse(stored);
-            set({ proofs });
-          }
-
-          // Simulate loading from blockchain
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Load from public IPFS first, then fallback to localStorage
+          let proofs: Proof[] = [];
           
-          set({ isLoading: false });
+          try {
+            proofs = await publicDataService.getAllPublicProofs();
+            console.log(`Loaded ${proofs.length} proofs from public IPFS`);
+          } catch (publicError) {
+            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
+            // Fallback to localStorage
+            const stored = localStorage.getItem('all_proofs');
+            if (stored) {
+              proofs = JSON.parse(stored);
+            }
+          }
+          
+          set({ proofs, isLoading: false });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
           set({ error: `Failed to load proofs: ${errorMessage}`, isLoading: false });
@@ -292,17 +302,35 @@ export const useAppStore = create<AppState>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Load cached freelancers
-          const stored = localStorage.getItem('freelancers');
-          if (stored) {
-            const freelancers = JSON.parse(stored);
-            set({ freelancers });
-          }
-
-          // Simulate loading from blockchain
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Load from public IPFS first, then fallback to localStorage
+          let freelancers: Freelancer[] = [];
           
-          set({ isLoading: false });
+          try {
+            const publicFreelancers = await publicDataService.getAllPublicFreelancers();
+            // Convert public freelancer profiles to store format
+            freelancers = publicFreelancers.map(pf => ({
+              walletAddress: pf.walletAddress,
+              name: pf.name,
+              bio: pf.bio,
+              avatar: pf.avatar,
+              specialties: pf.specialties,
+              rating: pf.rating,
+              totalProofs: pf.totalProofs,
+              totalEndorsements: pf.totalEndorsements,
+              joinedAt: pf.joinedAt,
+              social: pf.social
+            }));
+            console.log(`Loaded ${freelancers.length} freelancers from public IPFS`);
+          } catch (publicError) {
+            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
+            // Fallback to localStorage
+            const stored = localStorage.getItem('freelancers');
+            if (stored) {
+              freelancers = JSON.parse(stored);
+            }
+          }
+          
+          set({ freelancers, isLoading: false });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
           set({ error: `Failed to load freelancers: ${errorMessage}`, isLoading: false });
