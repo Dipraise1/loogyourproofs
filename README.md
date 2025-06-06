@@ -51,7 +51,7 @@ A fully functional decentralized web application where freelancers can log immut
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/saveyourproofs.git
+git clone git remote add origin https://github.com/Dipraise1/loogyourproofs.git
 cd saveyourproofs
 ```
 
@@ -318,3 +318,5 @@ If you encounter any issues or have questions:
 **Built with ❤️ by freelancers, for freelancers.**
 
 *"Your work, your proof, your reputation - all secured on the blockchain."* # loogyourproofs
+
+Last updated: 2024-12-19
