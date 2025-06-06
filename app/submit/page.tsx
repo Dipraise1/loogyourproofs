@@ -127,9 +127,15 @@ export default function SubmitPage() {
   };
 
   const handleAddTag = () => {
-    if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
-      handleInputChange('tags', [...formData.tags, currentTag.trim()]);
+    const trimmedTag = currentTag.trim();
+    if (trimmedTag && !formData.tags.includes(trimmedTag)) {
+      handleInputChange('tags', [...formData.tags, trimmedTag]);
       setCurrentTag('');
+      toast.success(`Tag "${trimmedTag}" added successfully!`);
+    } else if (!trimmedTag) {
+      toast.error('Please enter a tag');
+    } else {
+      toast.error('Tag already exists');
     }
   };
 
@@ -224,6 +230,7 @@ export default function SubmitPage() {
       toast.error('Please enter a description');
       return false;
     }
+    console.log('Current tags:', formData.tags, 'Length:', formData.tags.length);
     if (formData.tags.length === 0) {
       toast.error('Please add at least one tag');
       return false;
@@ -393,23 +400,37 @@ export default function SubmitPage() {
 
             {/* Tags */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-purple-300 mb-4">Tags</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-purple-300">Tags</h2>
+                <span className="text-sm text-gray-400">
+                  {formData.tags.length} tag{formData.tags.length !== 1 ? 's' : ''} added
+                </span>
+              </div>
               
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={currentTag}
                   onChange={(e) => setCurrentTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
                   className="cyber-input flex-1"
                   placeholder="Add tags (e.g., React, DeFi, Smart Contract)..."
                   disabled={isSubmitting}
                 />
                 <button
                   type="button"
-                  onClick={handleAddTag}
-                  className="neon-button px-4"
-                  disabled={isSubmitting}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAddTag();
+                  }}
+                  className="neon-button px-4 flex items-center justify-center"
+                  disabled={isSubmitting || !currentTag.trim()}
+                  title="Add Tag"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
