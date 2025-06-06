@@ -42,18 +42,19 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group" onClick={closeMenu}>
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 group-hover:shadow-lg group-hover:shadow-purple-500/25 bg-purple-600/20 border border-purple-500/30 relative">
+              <div className="w-10 h-10 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 group-hover:shadow-lg group-hover:shadow-purple-500/25 bg-purple-600/20 border border-purple-500/30 relative">
                 <Image 
                   src="/image.png" 
                   alt="SaveYourProofs Logo" 
-                  width={32}
-                  height={32}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-contain"
                   onLoad={() => console.log('Logo loaded successfully')}
                   onError={(e) => {
                     console.error('Logo failed to load:', e);
                   }}
                   priority
+                  unoptimized
                 />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
