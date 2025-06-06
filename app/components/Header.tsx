@@ -33,9 +33,14 @@ export function Header() {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'glass-panel border-b border-purple-500/20 backdrop-blur-md' 
+          ? 'glass-panel border-b border-purple-500/20 backdrop-blur-xl' 
           : 'bg-transparent'
       }`}
+      style={isScrolled ? {
+        background: 'linear-gradient(180deg, rgba(10, 10, 11, 0.95) 0%, rgba(17, 17, 19, 0.92) 100%)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      } : undefined}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -131,8 +136,12 @@ export function Header() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+                className="fixed inset-0 bg-black/70 backdrop-blur-md z-40 lg:hidden"
                 onClick={closeMenu}
+                style={{
+                  backdropFilter: 'blur(8px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(8px) saturate(180%)',
+                }}
               />
               
               {/* Mobile Menu Panel */}
@@ -141,11 +150,18 @@ export function Header() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-16 right-0 bottom-0 w-80 max-w-[85vw] bg-dark-800/95 backdrop-blur-md border-l border-purple-500/20 z-50 lg:hidden"
+                className="fixed top-16 right-0 bottom-0 w-80 max-w-[85vw] border-l border-purple-500/30 z-50 lg:hidden shadow-2xl"
+                style={{
+                  background: 'linear-gradient(180deg, rgb(10, 10, 11) 0%, rgb(17, 17, 19) 100%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                }}
               >
-                <div className="flex flex-col h-full">
+                {/* Solid background overlay to prevent transparency */}
+                <div className="absolute inset-0 bg-dark-900 opacity-95"></div>
+                <div className="relative flex flex-col h-full z-10">
                   {/* Navigation Links */}
-                  <nav className="flex-1 px-6 py-8">
+                  <nav className="flex-1 px-6 py-8 bg-dark-900/40">
                     <div className="space-y-2">
                       {navigation.map((item, index) => (
                         <motion.div
@@ -156,11 +172,11 @@ export function Header() {
                         >
                           <Link
                             href={item.href}
-                            className="flex items-center gap-4 px-4 py-4 rounded-lg text-base font-medium text-gray-300 hover:text-white hover:bg-purple-500/20 transition-all duration-300 group"
+                            className="flex items-center gap-4 px-4 py-4 rounded-lg text-base font-medium text-gray-300 hover:text-white bg-dark-800/80 hover:bg-purple-500/40 transition-all duration-300 group border border-purple-500/10 hover:border-purple-400/30"
                             onClick={closeMenu}
                           >
-                            <div className="w-10 h-10 bg-purple-500/20 border border-purple-400/30 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                              <item.icon className="w-5 h-5 group-hover:text-purple-400 transition-colors" />
+                            <div className="w-10 h-10 bg-purple-600/60 border border-purple-400/50 rounded-lg flex items-center justify-center group-hover:bg-purple-500/80 transition-colors">
+                              <item.icon className="w-5 h-5 text-purple-300 group-hover:text-purple-200 transition-colors" />
                             </div>
                             <span>{item.name}</span>
                           </Link>
@@ -170,7 +186,7 @@ export function Header() {
                   </nav>
                   
                   {/* Wallet Connection */}
-                  <div className="border-t border-purple-500/20 p-6">
+                  <div className="border-t border-purple-500/30 p-6 bg-dark-800/60">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -184,7 +200,7 @@ export function Header() {
                   </div>
                   
                   {/* App Info */}
-                  <div className="border-t border-purple-500/20 p-6">
+                  <div className="border-t border-purple-500/30 p-6 bg-dark-900/80">
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
