@@ -2,7 +2,7 @@ import { IPFSHTTPClient } from 'ipfs-http-client';
 
 // IPFS configuration with Pinata support
 const getIPFSConfig = (): any => {
-  // Check for Pinata configuration first
+  // Check for Pinata JWT token first (recommended)
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_PINATA_JWT) {
     return {
       host: 'api.pinata.cloud',
@@ -10,6 +10,19 @@ const getIPFSConfig = (): any => {
       protocol: 'https' as const,
       headers: {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+      },
+    };
+  }
+
+  // Check for Pinata API key/secret (alternative method)
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_PINATA_API_KEY && process.env.NEXT_PUBLIC_PINATA_SECRET) {
+    return {
+      host: 'api.pinata.cloud',
+      port: 443,
+      protocol: 'https' as const,
+      headers: {
+        'pinata_api_key': process.env.NEXT_PUBLIC_PINATA_API_KEY,
+        'pinata_secret_api_key': process.env.NEXT_PUBLIC_PINATA_SECRET,
       },
     };
   }

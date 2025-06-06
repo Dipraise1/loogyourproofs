@@ -6,8 +6,14 @@
 # ===========================================
 
 # Pinata (Recommended IPFS service)
-# Get your JWT token from: https://pinata.cloud/
+# Get credentials from: https://pinata.cloud/
+# 
+# Method 1: JWT Token (Recommended)
 # NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token_here
+#
+# Method 2: API Key + Secret (Alternative)
+# NEXT_PUBLIC_PINATA_API_KEY=your_pinata_api_key
+# NEXT_PUBLIC_PINATA_SECRET=your_pinata_secret_key
 
 # Infura IPFS (Alternative)
 # Get credentials from: https://infura.io/
@@ -49,3 +55,10 @@ NEXT_PUBLIC_ETHEREUM_NETWORK=sepolia
 # 2. Create account and get JWT token
 # 3. Replace: NEXT_PUBLIC_PINATA_JWT=your_actual_jwt_token
 # 4. Save as .env.local in your project root 
+
+
+
+
+API Key: 2f2558efe946a2d55695
+API Secret: a0f6c359e438d7eccde0da7564f98ef559e7fe75cb593dd8199d0f80bd6dbe01
+JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyMmNmYjQ2Ni1hYzM2LTQwYzMtODFmMC0zMDA2MjNlZWJiNjYiLCJlbWFpbCI6InJhcGhlYWxkaXZpbmUyQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiIyZjI1NThlZmU5NDZhMmQ1NTY5NSIsInNjb3BlZEtleVNlY3JldCI6ImEwZjZjMzU5ZTQzOGQ3ZWNjZGUwZGE3NTY0Zjk4ZWY1NTllN2ZlNzVjYjU5M2RkODE5OWQwZjgwYmQ2ZGJlMDEiLCJleHAiOjE3ODA3NzM2MTF9.EbVuXmPhTD-_JTP3zhyIVfOCgqXECuh2zYPXcV7-MjE
