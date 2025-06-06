@@ -1,22 +1,39 @@
 import { IPFSHTTPClient } from 'ipfs-http-client';
 
-// IPFS configuration
-const getIPFSConfig = () => {
-  const config: any = {
-    host: 'ipfs.infura.io',
-    port: 5001,
-    protocol: 'https' as const,
-  };
-
-  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_INFURA_PROJECT_ID) {
-    config.headers = {
-      authorization: `Basic ${Buffer.from(
-        process.env.NEXT_PUBLIC_INFURA_PROJECT_ID + ':' + process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
-      ).toString('base64')}`
+// IPFS configuration with Pinata support
+const getIPFSConfig = (): any => {
+  // Check for Pinata configuration first
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_PINATA_JWT) {
+    return {
+      host: 'api.pinata.cloud',
+      port: 443,
+      protocol: 'https' as const,
+      headers: {
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+      },
     };
   }
 
-  return config;
+  // Fallback to Infura if configured
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_INFURA_PROJECT_ID) {
+    return {
+      host: 'ipfs.infura.io',
+      port: 5001,
+      protocol: 'https' as const,
+      headers: {
+        authorization: `Basic ${Buffer.from(
+          process.env.NEXT_PUBLIC_INFURA_PROJECT_ID + ':' + process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
+        ).toString('base64')}`
+      }
+    };
+  }
+
+  // Default public gateway
+  return {
+    host: 'node0.preload.ipfs.io',
+    port: 443,
+    protocol: 'https' as const,
+  };
 };
 
 // Alternative public IPFS gateway

@@ -23,10 +23,12 @@ import Link from 'next/link';
 import { WalletConnect } from './components/WalletConnect';
 import { Header } from './components/Header';
 import { useAppStore, type Proof } from '../lib/store';
+import { useAppInit } from '../lib/hooks/useAppInit';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const { proofs, freelancers } = useAppStore();
+  const { isLoading: appInitializing } = useAppInit();
 
   useEffect(() => {
     setMounted(true);
@@ -58,10 +60,15 @@ export default function HomePage() {
     ];
   };
 
-  if (!mounted) {
+  if (!mounted || appInitializing) {
     return (
       <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-        <div className="spinner"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="spinner"></div>
+          <p className="text-gray-400 text-sm">
+            {!mounted ? 'Loading...' : 'Initializing data...'}
+          </p>
+        </div>
       </div>
     );
   }

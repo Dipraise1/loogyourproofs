@@ -90,6 +90,12 @@ interface AppState {
   searchFreelancers: (query: string) => Freelancer[];
   getProofsByType: (type: string) => Proof[];
   getProofsByTags: (tags: string[]) => Proof[];
+  
+  // Auto-onboarding
+  autoOnboardFreelancer: (walletAddress: string) => Promise<void>;
+  
+  // Initialize app data
+  initializeAppData: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -110,6 +116,7 @@ export const useAppStore = create<AppState>()(
         set({ connectedWallet: address, walletType: type });
         if (address) {
           get().loadUserProofs(address);
+          get().autoOnboardFreelancer(address);
         } else {
           set({ userProofs: [], currentFreelancer: null });
         }
@@ -117,61 +124,117 @@ export const useAppStore = create<AppState>()(
 
       // Proof actions
       addProof: (proof) => {
-        set((state) => ({
-          proofs: [...state.proofs, proof],
-          userProofs: proof.walletAddress === state.connectedWallet 
+        set((state) => {
+          const newProofs = [...state.proofs, proof];
+          const newUserProofs = proof.walletAddress === state.connectedWallet 
             ? [...state.userProofs, proof] 
-            : state.userProofs
-        }));
+            : state.userProofs;
+          
+          // Save to localStorage immediately
+          localStorage.setItem('all_proofs', JSON.stringify(newProofs));
+          if (proof.walletAddress === state.connectedWallet) {
+            localStorage.setItem(`proofs_${proof.walletAddress}`, JSON.stringify(newUserProofs));
+          }
+          
+          return {
+            proofs: newProofs,
+            userProofs: newUserProofs
+          };
+        });
       },
 
       updateProof: (id, updates) => {
-        set((state) => ({
-          proofs: state.proofs.map(p => p.id === id ? { ...p, ...updates } : p),
-          userProofs: state.userProofs.map(p => p.id === id ? { ...p, ...updates } : p)
-        }));
+        set((state) => {
+          const newProofs = state.proofs.map(p => p.id === id ? { ...p, ...updates } : p);
+          const newUserProofs = state.userProofs.map(p => p.id === id ? { ...p, ...updates } : p);
+          
+          // Save to localStorage immediately
+          localStorage.setItem('all_proofs', JSON.stringify(newProofs));
+          if (state.connectedWallet) {
+            localStorage.setItem(`proofs_${state.connectedWallet}`, JSON.stringify(newUserProofs));
+          }
+          
+          return {
+            proofs: newProofs,
+            userProofs: newUserProofs
+          };
+        });
       },
 
       removeProof: (id) => {
-        set((state) => ({
-          proofs: state.proofs.filter(p => p.id !== id),
-          userProofs: state.userProofs.filter(p => p.id !== id)
-        }));
+        set((state) => {
+          const newProofs = state.proofs.filter(p => p.id !== id);
+          const newUserProofs = state.userProofs.filter(p => p.id !== id);
+          
+          // Save to localStorage immediately
+          localStorage.setItem('all_proofs', JSON.stringify(newProofs));
+          if (state.connectedWallet) {
+            localStorage.setItem(`proofs_${state.connectedWallet}`, JSON.stringify(newUserProofs));
+          }
+          
+          return {
+            proofs: newProofs,
+            userProofs: newUserProofs
+          };
+        });
       },
 
       addEndorsement: (proofId, endorsement) => {
-        set((state) => ({
-          proofs: state.proofs.map(p => 
+        set((state) => {
+          const newProofs = state.proofs.map(p => 
             p.id === proofId 
               ? { ...p, endorsements: [...p.endorsements, endorsement] }
               : p
-          ),
-          userProofs: state.userProofs.map(p => 
+          );
+          const newUserProofs = state.userProofs.map(p => 
             p.id === proofId 
               ? { ...p, endorsements: [...p.endorsements, endorsement] }
               : p
-          )
-        }));
+          );
+          
+          // Save to localStorage immediately
+          localStorage.setItem('all_proofs', JSON.stringify(newProofs));
+          if (state.connectedWallet) {
+            localStorage.setItem(`proofs_${state.connectedWallet}`, JSON.stringify(newUserProofs));
+          }
+          
+          return {
+            proofs: newProofs,
+            userProofs: newUserProofs
+          };
+        });
       },
 
       // Freelancer actions
-      setFreelancers: (freelancers) => set({ freelancers }),
+      setFreelancers: (freelancers) => {
+        set({ freelancers });
+        localStorage.setItem('freelancers', JSON.stringify(freelancers));
+      },
 
       addFreelancer: (freelancer) => {
-        set((state) => ({
-          freelancers: [...state.freelancers.filter(f => f.walletAddress !== freelancer.walletAddress), freelancer]
-        }));
+        set((state) => {
+          const newFreelancers = [...state.freelancers.filter(f => f.walletAddress !== freelancer.walletAddress), freelancer];
+          localStorage.setItem('freelancers', JSON.stringify(newFreelancers));
+          return { freelancers: newFreelancers };
+        });
       },
 
       updateFreelancer: (address, updates) => {
-        set((state) => ({
-          freelancers: state.freelancers.map(f => 
+        set((state) => {
+          const newFreelancers = state.freelancers.map(f => 
             f.walletAddress === address ? { ...f, ...updates } : f
-          ),
-          currentFreelancer: state.currentFreelancer?.walletAddress === address 
+          );
+          const newCurrentFreelancer = state.currentFreelancer?.walletAddress === address 
             ? { ...state.currentFreelancer, ...updates }
-            : state.currentFreelancer
-        }));
+            : state.currentFreelancer;
+          
+          localStorage.setItem('freelancers', JSON.stringify(newFreelancers));
+          
+          return {
+            freelancers: newFreelancers,
+            currentFreelancer: newCurrentFreelancer
+          };
+        });
       },
 
       setCurrentFreelancer: (freelancer) => set({ currentFreelancer: freelancer }),
@@ -278,6 +341,68 @@ export const useAppStore = create<AppState>()(
         return proofs.filter(proof => 
           tags.some(tag => proof.tags.includes(tag))
         );
+      },
+
+      // Auto-onboarding function
+      autoOnboardFreelancer: async (walletAddress: string) => {
+        const { freelancers, addFreelancer, setCurrentFreelancer } = get();
+        
+        // Check if freelancer already exists
+        let freelancer = freelancers.find(f => f.walletAddress === walletAddress);
+        
+        if (!freelancer) {
+          // Create new freelancer
+          freelancer = {
+            walletAddress,
+            name: `Freelancer ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
+            bio: 'New to SaveYourProofs',
+            specialties: [],
+            rating: 0,
+            totalProofs: 0,
+            totalEndorsements: 0,
+            joinedAt: Date.now(),
+          };
+          
+          addFreelancer(freelancer);
+          console.log('Auto-onboarded new freelancer:', walletAddress);
+        }
+        
+        setCurrentFreelancer(freelancer);
+      },
+
+      // Initialize app data
+      initializeAppData: async () => {
+        try {
+          set({ isLoading: true });
+          
+          // Load all data from localStorage
+          const allProofs = JSON.parse(localStorage.getItem('all_proofs') || '[]');
+          const freelancers = JSON.parse(localStorage.getItem('freelancers') || '[]');
+          
+          set({ 
+            proofs: allProofs,
+            freelancers: freelancers,
+            isLoading: false 
+          });
+          
+          console.log(`Loaded ${allProofs.length} proofs and ${freelancers.length} freelancers from storage`);
+          
+          // If connected wallet exists, load user-specific data
+          const { connectedWallet } = get();
+          if (connectedWallet) {
+            const userProofs = JSON.parse(localStorage.getItem(`proofs_${connectedWallet}`) || '[]');
+            const currentFreelancer = freelancers.find((f: Freelancer) => f.walletAddress === connectedWallet);
+            
+            set({ 
+              userProofs,
+              currentFreelancer: currentFreelancer || null 
+            });
+          }
+          
+        } catch (error) {
+          console.error('Failed to initialize app data:', error);
+          set({ isLoading: false, error: 'Failed to load application data' });
+        }
       },
     }),
     {
