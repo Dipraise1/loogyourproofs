@@ -73,14 +73,33 @@ Edit `.env.local` with your configuration:
 NEXT_PUBLIC_INFURA_PROJECT_ID=your_infura_project_id
 NEXT_PUBLIC_INFURA_PROJECT_SECRET=your_infura_secret
 
-# Pinata (Alternative IPFS service)
-PINATA_API_KEY=your_pinata_api_key
-PINATA_SECRET_API_KEY=your_pinata_secret
+# Pinata (Alternative IPFS service - Recommended)
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
 
 # Blockchain Configuration
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_ETHEREUM_NETWORK=sepolia
 ```
+
+### IPFS Configuration Options
+
+The app supports multiple IPFS providers with automatic fallback:
+
+1. **Pinata (Recommended)**: Get your JWT token from [Pinata](https://pinata.cloud/)
+2. **Infura**: Use your Infura project credentials  
+3. **Public Gateways**: Automatic fallback to public IPFS nodes
+
+**Priority Order**: Pinata → Infura → Public Gateway
+
+## 💾 Data Persistence
+
+The application features comprehensive data persistence:
+
+- **Automatic Saving**: All proof submissions and user data automatically save to localStorage
+- **Real-time Updates**: Statistics and portfolios update immediately after submissions
+- **Auto-onboarding**: New users are automatically created when wallets connect
+- **Session Recovery**: All data persists across browser sessions
+- **Sync on Startup**: Application automatically loads all stored data on initialization
 
 4. **Run the development server**
 ```bash
