@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import { Providers } from './providers'
 import { Toaster } from 'react-hot-toast'
+import { WalletDebug } from './components/WalletDebug'
 
 const poppins = Poppins({ 
   subsets: ['latin'],
@@ -300,6 +301,9 @@ export default function RootLayout({
                 },
               }}
             />
+            
+            {/* Debug component for development */}
+            <WalletDebug />
           </div>
         </Providers>
       </body>

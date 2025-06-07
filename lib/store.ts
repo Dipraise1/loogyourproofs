@@ -114,10 +114,25 @@ export const useAppStore = create<AppState>()(
 
       // Wallet actions
       setConnectedWallet: (address, type) => {
+        const currentState = get();
+        
+        // Prevent unnecessary updates if values haven't changed
+        if (currentState.connectedWallet === address && currentState.walletType === type) {
+          return;
+        }
+        
+        console.log('Setting connected wallet:', { address, type, previous: currentState.connectedWallet });
         set({ connectedWallet: address, walletType: type });
+        
         if (address) {
-          get().loadUserProofs(address);
-          get().autoOnboardFreelancer(address);
+          // Use setTimeout to prevent blocking UI updates
+          setTimeout(() => {
+            const state = get();
+            if (state.connectedWallet === address) { // Double check wallet is still connected
+              state.loadUserProofs(address);
+              state.autoOnboardFreelancer(address);
+            }
+          }, 100);
         } else {
           set({ userProofs: [], currentFreelancer: null });
         }

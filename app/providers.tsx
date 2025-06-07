@@ -28,7 +28,14 @@ export const Providers: FC<ProvidersProps> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
 
   // You can also provide a custom RPC endpoint.
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint = useMemo(() => {
+    // Use custom RPC endpoint for better reliability
+    const customEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+    if (customEndpoint) {
+      return customEndpoint;
+    }
+    return clusterApiUrl(network);
+  }, [network]);
 
   const wallets = useMemo(
     () => [
@@ -40,8 +47,20 @@ export const Providers: FC<ProvidersProps> = ({ children }) => {
   );
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+    <ConnectionProvider 
+      endpoint={endpoint}
+      config={{
+        commitment: 'confirmed',
+        confirmTransactionInitialTimeout: 60000
+      }}
+    >
+      <WalletProvider 
+        wallets={wallets} 
+        autoConnect={false}
+        onError={(error) => {
+          console.error('Wallet error:', error);
+        }}
+      >
         <WalletModalProvider>
           {children}
         </WalletModalProvider>

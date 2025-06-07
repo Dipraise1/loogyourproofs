@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, Zap, AlertTriangle } from 'lucide-react';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -13,63 +13,181 @@ export function WalletConnect() {
   const { setVisible } = useWalletModal();
   const { setConnectedWallet } = useAppStore();
   const [isEthereumConnected, setIsEthereumConnected] = useState(false);
+  const [isEthConnecting, setIsEthConnecting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Use refs to prevent stale closures and track initialization
+  const ethListenerRef = useRef<((accounts: string[]) => void) | null>(null);
+  const hasInitialized = useRef(false);
+  const lastSolanaState = useRef<{ connected: boolean; publicKey: string | null }>({ connected: false, publicKey: null });
 
-  // Update store when Solana wallet connects/disconnects
-  useEffect(() => {
-    if (connected && publicKey) {
-      setConnectedWallet(publicKey.toBase58(), 'phantom');
-    } else if (!connected) {
+  // Ethereum event handler with stable reference
+  const handleEthAccountsChanged = useCallback((accounts: string[]) => {
+    console.log('Ethereum accounts changed:', accounts);
+    if (accounts.length > 0) {
+      setIsEthereumConnected(true);
+      setConnectedWallet(accounts[0], 'metamask');
+      localStorage.setItem('lastConnectedWallet', 'ethereum');
+      localStorage.setItem('ethAccount', accounts[0]);
+    } else {
+      setIsEthereumConnected(false);
       setConnectedWallet(null, null);
+      localStorage.removeItem('lastConnectedWallet');
+      localStorage.removeItem('ethAccount');
     }
-  }, [connected, publicKey, setConnectedWallet]);
+  }, [setConnectedWallet]);
 
-  // Check for existing Ethereum connection
+  // Single initialization effect - runs once
   useEffect(() => {
-    const checkEthereumConnection = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            setIsEthereumConnected(true);
-            setConnectedWallet(accounts[0], 'metamask');
+    if (typeof window === 'undefined' || hasInitialized.current) return;
+    
+    hasInitialized.current = true;
+    console.log('Initializing wallets...');
+
+    const initializeWallets = async () => {
+      try {
+        const savedWalletType = localStorage.getItem('lastConnectedWallet');
+        const savedEthAccount = localStorage.getItem('ethAccount');
+        
+        // Check Ethereum connection
+        if (window.ethereum && savedWalletType === 'ethereum' && savedEthAccount) {
+          try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0 && accounts.includes(savedEthAccount)) {
+              setIsEthereumConnected(true);
+              setConnectedWallet(accounts[0], 'metamask');
+              
+              // Set up event listener
+              if (ethListenerRef.current) {
+                window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
+              }
+              ethListenerRef.current = handleEthAccountsChanged;
+              window.ethereum.on('accountsChanged', ethListenerRef.current);
+            }
+          } catch (error) {
+            console.error('Error checking Ethereum connection:', error);
+            localStorage.removeItem('lastConnectedWallet');
+            localStorage.removeItem('ethAccount');
           }
-        } catch (error) {
-          console.error('Error checking Ethereum connection:', error);
         }
+      } catch (error) {
+        console.error('Error initializing wallets:', error);
+      } finally {
+        setIsInitialized(true);
       }
     };
 
-    checkEthereumConnection();
-  }, [setConnectedWallet]);
+    initializeWallets();
+  }, []); // No dependencies - run once only
 
-  const handleSolanaConnect = () => {
+  // Handle Solana wallet state changes - with guards to prevent loops
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const currentState = {
+      connected,
+      publicKey: publicKey?.toBase58() || null
+    };
+
+    // Only process if state actually changed
+    if (
+      currentState.connected !== lastSolanaState.current.connected ||
+      currentState.publicKey !== lastSolanaState.current.publicKey
+    ) {
+      console.log('Solana state changed:', { 
+        connected, 
+        publicKey: currentState.publicKey, 
+        isEthereumConnected 
+      });
+
+      lastSolanaState.current = currentState;
+
+      if (connected && publicKey && !isEthereumConnected) {
+        setConnectedWallet(publicKey.toBase58(), 'phantom');
+        localStorage.setItem('lastConnectedWallet', 'solana');
+      } else if (!connected && !isEthereumConnected) {
+        const savedWalletType = localStorage.getItem('lastConnectedWallet');
+        if (savedWalletType === 'solana') {
+          setConnectedWallet(null, null);
+          localStorage.removeItem('lastConnectedWallet');
+        }
+      }
+    }
+  }, [connected, publicKey, isEthereumConnected, isInitialized]); // Remove setConnectedWallet from deps
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && window.ethereum && ethListenerRef.current) {
+        window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
+        ethListenerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSolanaConnect = useCallback(() => {
     setVisible(true);
-  };
+  }, [setVisible]);
 
   const handleEthereumConnect = async () => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) {
-          setIsEthereumConnected(true);
-          setConnectedWallet(accounts[0], 'metamask');
-        }
-      } catch (error) {
-        console.error('Failed to connect to Ethereum wallet:', error);
-      }
-    } else {
+    if (typeof window === 'undefined' || !window.ethereum) {
       alert('MetaMask not found. Please install MetaMask to connect.');
+      return;
+    }
+
+    setIsEthConnecting(true);
+    try {
+      // Disconnect Solana wallet first if connected
+      if (connected) {
+        await disconnect();
+      }
+      
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (accounts.length > 0) {
+        setIsEthereumConnected(true);
+        setConnectedWallet(accounts[0], 'metamask');
+        localStorage.setItem('lastConnectedWallet', 'ethereum');
+        localStorage.setItem('ethAccount', accounts[0]);
+        
+        // Set up event listener
+        if (ethListenerRef.current) {
+          window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
+        }
+        ethListenerRef.current = handleEthAccountsChanged;
+        window.ethereum.on('accountsChanged', ethListenerRef.current);
+      }
+    } catch (error) {
+      console.error('Failed to connect to Ethereum wallet:', error);
+      setIsEthereumConnected(false);
+    } finally {
+      setIsEthConnecting(false);
     }
   };
 
-  const handleEthereumDisconnect = () => {
+  const handleEthereumDisconnect = useCallback(() => {
     setIsEthereumConnected(false);
     setConnectedWallet(null, null);
-  };
+    localStorage.removeItem('lastConnectedWallet');
+    localStorage.removeItem('ethAccount');
+    
+    // Remove event listener
+    if (typeof window !== 'undefined' && window.ethereum && ethListenerRef.current) {
+      window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
+      ethListenerRef.current = null;
+    }
+  }, []); // Remove setConnectedWallet from deps
 
-  const handleSolanaDisconnect = () => {
-    disconnect();
-    setConnectedWallet(null, null);
+  const handleSolanaDisconnect = async () => {
+    try {
+      await disconnect();
+      setConnectedWallet(null, null);
+      localStorage.removeItem('lastConnectedWallet');
+    } catch (error) {
+      console.error('Error disconnecting Solana wallet:', error);
+      // Force cleanup even if disconnect fails
+      setConnectedWallet(null, null);
+      localStorage.removeItem('lastConnectedWallet');
+    }
   };
 
   if (connected || isEthereumConnected) {
@@ -83,7 +201,7 @@ export function WalletConnect() {
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           <span className="text-sm text-green-300">Connected</span>
           <span className="text-xs text-gray-400 font-mono">
-            {connected ? wallet?.adapter?.name : 'MetaMask'}
+            {connected ? (wallet?.adapter?.name || 'Solana') : 'MetaMask'}
           </span>
         </div>
         <button
@@ -96,7 +214,7 @@ export function WalletConnect() {
     );
   }
 
-  if (connecting) {
+  if (!isInitialized || connecting || isEthConnecting) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -104,7 +222,9 @@ export function WalletConnect() {
         className="flex items-center gap-2 px-4 py-2"
       >
         <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-sm text-purple-300">Connecting...</span>
+        <span className="text-sm text-purple-300">
+          {!isInitialized ? 'Initializing...' : connecting ? 'Connecting to Solana...' : 'Connecting to Ethereum...'}
+        </span>
       </motion.div>
     );
   }
