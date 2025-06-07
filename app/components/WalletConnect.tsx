@@ -7,6 +7,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAppStore } from '../../lib/store';
+import '../utils/phantomErrorSuppress'; // Auto-suppress Phantom errors
 
 export function WalletConnect() {
   const { wallet, connecting, connected, disconnect, publicKey } = useWallet();
@@ -37,12 +38,21 @@ export function WalletConnect() {
     }
   }, [setConnectedWallet]);
 
-  // Single initialization effect - runs once
+  // Single initialization effect - runs once with strong guards
   useEffect(() => {
     if (typeof window === 'undefined' || hasInitialized.current) return;
     
+    // Additional check to prevent re-initialization during hot reloads
+    const initKey = 'wallet_init_' + Date.now();
+    if (window.sessionStorage.getItem('wallet_initialized')) {
+      console.log('⚠️ Wallets already initialized in this session, skipping...');
+      setIsInitialized(true);
+      return;
+    }
+    
     hasInitialized.current = true;
-    console.log('Initializing wallets...');
+    window.sessionStorage.setItem('wallet_initialized', initKey);
+    console.log('🚀 Initializing wallets... (one-time setup)');
 
     const initializeWallets = async () => {
       try {
@@ -80,7 +90,7 @@ export function WalletConnect() {
     initializeWallets();
   }, []); // No dependencies - run once only
 
-  // Handle Solana wallet state changes - with guards to prevent loops
+  // Handle Solana wallet state changes - with stronger guards to prevent loops
   useEffect(() => {
     if (!isInitialized) return;
 
@@ -94,26 +104,46 @@ export function WalletConnect() {
       currentState.connected !== lastSolanaState.current.connected ||
       currentState.publicKey !== lastSolanaState.current.publicKey
     ) {
-      console.log('Solana state changed:', { 
-        connected, 
-        publicKey: currentState.publicKey, 
-        isEthereumConnected 
-      });
-
+      // Immediately update the ref to prevent rapid duplicate processing
       lastSolanaState.current = currentState;
 
-      if (connected && publicKey && !isEthereumConnected) {
-        setConnectedWallet(publicKey.toBase58(), 'phantom');
-        localStorage.setItem('lastConnectedWallet', 'solana');
-      } else if (!connected && !isEthereumConnected) {
-        const savedWalletType = localStorage.getItem('lastConnectedWallet');
-        if (savedWalletType === 'solana') {
-          setConnectedWallet(null, null);
-          localStorage.removeItem('lastConnectedWallet');
+      // Use a longer delay to better debounce rapid state changes
+      const timeoutId = setTimeout(() => {
+        // Double-check state hasn't changed again during the delay
+        const latestState = {
+          connected,
+          publicKey: publicKey?.toBase58() || null
+        };
+        
+        // Only proceed if state is still the same as when we started
+        if (
+          latestState.connected === currentState.connected &&
+          latestState.publicKey === currentState.publicKey
+        ) {
+          console.log('✅ Solana state stabilized:', { 
+            connected: latestState.connected, 
+            publicKey: latestState.publicKey, 
+            isEthereumConnected 
+          });
+
+          if (connected && publicKey && !isEthereumConnected) {
+            setConnectedWallet(publicKey.toBase58(), 'phantom');
+            localStorage.setItem('lastConnectedWallet', 'solana');
+          } else if (!connected && !isEthereumConnected) {
+            const savedWalletType = localStorage.getItem('lastConnectedWallet');
+            if (savedWalletType === 'solana') {
+              setConnectedWallet(null, null);
+              localStorage.removeItem('lastConnectedWallet');
+            }
+          }
+        } else {
+          console.log('⏭️ Solana state changed during debounce, skipping update');
         }
-      }
+      }, 300); // Increased to 300ms debounce
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [connected, publicKey, isEthereumConnected, isInitialized]); // Remove setConnectedWallet from deps
+  }, [connected, publicKey, isEthereumConnected, isInitialized]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -125,8 +155,15 @@ export function WalletConnect() {
     };
   }, []);
 
-  const handleSolanaConnect = useCallback(() => {
-    setVisible(true);
+  const handleSolanaConnect = useCallback(async () => {
+    try {
+      // Add a small delay to let any pending wallet operations complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setVisible(true);
+    } catch (error) {
+      console.warn('Phantom connection delay:', error);
+      setVisible(true); // Still try to connect
+    }
   }, [setVisible]);
 
   const handleEthereumConnect = async () => {
@@ -179,12 +216,14 @@ export function WalletConnect() {
 
   const handleSolanaDisconnect = async () => {
     try {
+      // Add delay to prevent communication issues
+      await new Promise(resolve => setTimeout(resolve, 100));
       await disconnect();
       setConnectedWallet(null, null);
       localStorage.removeItem('lastConnectedWallet');
     } catch (error) {
-      console.error('Error disconnecting Solana wallet:', error);
-      // Force cleanup even if disconnect fails
+      console.warn('Phantom disconnect communication issue (expected):', error instanceof Error ? error.message : error);
+      // Force cleanup even if disconnect fails due to service worker issues
       setConnectedWallet(null, null);
       localStorage.removeItem('lastConnectedWallet');
     }

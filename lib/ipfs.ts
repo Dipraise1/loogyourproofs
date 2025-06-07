@@ -13,18 +13,19 @@ const getWeb3StorageConfig = () => {
 
 // IPFS configuration with multiple reliable fallbacks
 const getIPFSConfig = (): any => {
-  // Check for Pinata JWT token first (recommended)
+  // Check for Pinata JWT token (recommended method)
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_PINATA_JWT) {
     return {
-      url: 'https://api.pinata.cloud/pinning/pinFileToIPFS',
+      url: 'https://api.pinata.cloud/v3/files',
       headers: {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
       },
-      isPinata: true
+      isPinata: true,
+      version: 'v3'
     };
   }
 
-  // Check for Pinata API key/secret (alternative method)
+  // Fallback to legacy API if old keys are provided
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_PINATA_API_KEY && process.env.NEXT_PUBLIC_PINATA_SECRET) {
     return {
       url: 'https://api.pinata.cloud/pinning/pinFileToIPFS',
@@ -32,7 +33,8 @@ const getIPFSConfig = (): any => {
         'pinata_api_key': process.env.NEXT_PUBLIC_PINATA_API_KEY,
         'pinata_secret_api_key': process.env.NEXT_PUBLIC_PINATA_SECRET,
       },
-      isPinata: true
+      isPinata: true,
+      version: 'legacy'
     };
   }
 
@@ -282,29 +284,39 @@ class IPFSService {
     const formData = new FormData();
     formData.append('file', file);
     
-    const pinataMetadata = JSON.stringify({
+    // Add metadata for v3 API
+    const metadata = {
       name: file.name,
-      keyvalues: {
+      keyValues: {
         uploadedAt: new Date().toISOString(),
-        size: file.size.toString()
+        size: file.size.toString(),
+        type: file.type || 'unknown'
       }
-    });
-    formData.append('pinataMetadata', pinataMetadata);
+    };
+    formData.append('metadata', JSON.stringify(metadata));
 
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    // Use the correct endpoint based on API version
+    const endpoint = this.pinataConfig.version === 'v3' 
+      ? 'https://api.pinata.cloud/v3/files'
+      : 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: this.pinataConfig.headers,
       body: formData
     });
 
     if (!response.ok) {
-      throw new Error(`Pinata upload failed: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Pinata upload failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const result = await response.json();
-    const hash = result.IpfsHash;
     
-    console.log(`✅ File uploaded to Pinata: ${hash}`);
+    // Handle different response formats
+    const hash = this.pinataConfig.version === 'v3' ? result.data.cid : result.IpfsHash;
+    
+    console.log(`✅ File uploaded to Pinata (${this.pinataConfig.version}): ${hash}`);
     return {
       hash,
       url: `https://gateway.pinata.cloud/ipfs/${hash}`,
@@ -427,37 +439,76 @@ class IPFSService {
    * Upload metadata to Pinata
    */
   private async uploadMetadataToPinata(metadataJson: string): Promise<IPFSUploadResult> {
-    const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.pinataConfig.headers
-      },
-      body: JSON.stringify({
-        pinataContent: JSON.parse(metadataJson),
-        pinataMetadata: {
-          name: 'proof-metadata.json',
-          keyvalues: {
-            uploadedAt: new Date().toISOString(),
-            type: 'metadata'
-          }
+    if (this.pinataConfig.version === 'v3') {
+      // Use v3 API - upload as file
+      const blob = new Blob([metadataJson], { type: 'application/json' });
+      const formData = new FormData();
+      formData.append('file', blob, 'metadata.json');
+      
+      const metadata = {
+        name: 'proof-metadata.json',
+        keyValues: {
+          uploadedAt: new Date().toISOString(),
+          type: 'metadata'
         }
-      })
-    });
+      };
+      formData.append('metadata', JSON.stringify(metadata));
 
-    if (!response.ok) {
-      throw new Error(`Pinata metadata upload failed: ${response.statusText}`);
+      const response = await fetch('https://api.pinata.cloud/v3/files', {
+        method: 'POST',
+        headers: this.pinataConfig.headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Pinata v3 metadata upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      const hash = result.data.cid;
+      
+      console.log(`✅ Metadata uploaded to Pinata v3: ${hash}`);
+      return {
+        hash,
+        url: `https://gateway.pinata.cloud/ipfs/${hash}`,
+        size: metadataJson.length
+      };
+    } else {
+      // Use legacy API
+      const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.pinataConfig.headers
+        },
+        body: JSON.stringify({
+          pinataContent: JSON.parse(metadataJson),
+          pinataMetadata: {
+            name: 'proof-metadata.json',
+            keyvalues: {
+              uploadedAt: new Date().toISOString(),
+              type: 'metadata'
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Pinata legacy metadata upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      const hash = result.IpfsHash;
+      
+      console.log(`✅ Metadata uploaded to Pinata legacy: ${hash}`);
+      return {
+        hash,
+        url: `https://gateway.pinata.cloud/ipfs/${hash}`,
+        size: metadataJson.length
+      };
     }
-
-    const result = await response.json();
-    const hash = result.IpfsHash;
-    
-    console.log(`✅ Metadata uploaded to Pinata: ${hash}`);
-    return {
-      hash,
-      url: `https://gateway.pinata.cloud/ipfs/${hash}`,
-      size: metadataJson.length
-    };
   }
 
   /**

@@ -3,7 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import { Providers } from './providers'
 import { Toaster } from 'react-hot-toast'
-import { WalletDebug } from './components/WalletDebug'
+// WalletDebug removed - will be conditionally imported in providers instead
+import './utils/phantomErrorSuppress' // Suppress Phantom service worker errors globally
 
 const poppins = Poppins({ 
   subsets: ['latin'],
@@ -303,7 +304,7 @@ export default function RootLayout({
             />
             
             {/* Debug component for development */}
-            <WalletDebug />
+            {/* WalletDebug moved to providers to avoid server component issues */}
           </div>
         </Providers>
       </body>

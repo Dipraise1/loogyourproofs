@@ -15,6 +15,7 @@ import {
   WalletModalProvider,
 } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
+import { WalletDebug } from './components/WalletDebug';
 
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -63,6 +64,8 @@ export const Providers: FC<ProvidersProps> = ({ children }) => {
       >
         <WalletModalProvider>
           {children}
+          {/* Debug component for development */}
+          {process.env.NODE_ENV === 'development' && <WalletDebug />}
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
