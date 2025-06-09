@@ -128,18 +128,30 @@ export default function ExplorePage() {
       
       <main className="pt-20 pb-12 px-4">
         <div className="container mx-auto max-w-7xl">
-          {/* Header */}
+          {/* Header with Background */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="relative text-center mb-8 overflow-hidden rounded-lg"
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-purple-300">
-              Discover Freelancers
-            </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Explore verified freelancers and their decentralized proof-of-work portfolios
-            </p>
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2940&auto=format&fit=crop"
+                alt="Team collaboration"
+                className="w-full h-full object-cover opacity-10"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-dark-900/90 via-dark-800/95 to-purple-900/80"></div>
+            </div>
+            
+            <div className="relative z-10 py-16 px-6">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-purple-300">
+                Discover Freelancers
+              </h1>
+              <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                Explore verified freelancers and their decentralized proof-of-work portfolios
+              </p>
+            </div>
           </motion.div>
 
           {/* Platform Stats */}

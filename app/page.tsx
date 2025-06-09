@@ -125,7 +125,7 @@ export default function HomePage() {
           <img 
             src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop"
             alt="Blockchain network"
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover opacity-15"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-dark-900/90 via-dark-800/95 to-purple-900/90"></div>
         </div>

@@ -47,7 +47,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group" onClick={closeMenu}>
             <div className="relative">
-              <div className="w-10 h-10 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 group-hover:shadow-lg group-hover:shadow-purple-500/25 bg-purple-600/20 border border-purple-500/30 relative">
+              <div className="w-10 h-10 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 bg-purple-600/20 border border-purple-500/30 relative">
                 <Image 
                   src="/image.png" 
                   alt="SaveYourProofs Logo" 
@@ -146,11 +146,11 @@ export function Header() {
               
               {/* Mobile Menu Panel */}
               <motion.div
-                initial={{ opacity: 0, x: '100%' }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: '100%' }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-16 right-0 bottom-0 w-80 max-w-[85vw] border-l border-purple-500/30 z-50 lg:hidden shadow-2xl"
+                className="fixed top-16 left-0 right-0 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-purple-500/30 z-50 lg:hidden shadow-2xl"
                 style={{
                   background: 'linear-gradient(180deg, rgb(10, 10, 11) 0%, rgb(17, 17, 19) 100%)',
                   backdropFilter: 'blur(20px) saturate(180%)',
@@ -159,26 +159,26 @@ export function Header() {
               >
                 {/* Solid background overlay to prevent transparency */}
                 <div className="absolute inset-0 bg-dark-900 opacity-95"></div>
-                <div className="relative flex flex-col h-full z-10">
+                <div className="relative z-10">
                   {/* Navigation Links */}
-                  <nav className="flex-1 px-6 py-8 bg-dark-900/40">
-                    <div className="space-y-2">
+                  <nav className="px-4 py-4 bg-dark-900/40">
+                    <div className="grid grid-cols-2 gap-3">
                       {navigation.map((item, index) => (
                         <motion.div
                           key={item.name}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
                         >
                           <Link
                             href={item.href}
-                            className="flex items-center gap-4 px-4 py-4 rounded-lg text-base font-medium text-gray-300 hover:text-white bg-dark-800/80 hover:bg-purple-500/40 transition-all duration-300 group border border-purple-500/10 hover:border-purple-400/30"
+                            className="flex flex-col items-center gap-2 px-3 py-4 rounded-lg text-sm font-medium text-gray-300 hover:text-white bg-dark-800/80 hover:bg-purple-500/40 transition-all duration-300 group border border-purple-500/10 hover:border-purple-400/30"
                             onClick={closeMenu}
                           >
-                            <div className="w-10 h-10 bg-purple-600/60 border border-purple-400/50 rounded-lg flex items-center justify-center group-hover:bg-purple-500/80 transition-colors">
-                              <item.icon className="w-5 h-5 text-purple-300 group-hover:text-purple-200 transition-colors" />
+                            <div className="w-8 h-8 bg-purple-600/60 border border-purple-400/50 rounded-lg flex items-center justify-center group-hover:bg-purple-500/80 transition-colors">
+                              <item.icon className="w-4 h-4 text-purple-300 group-hover:text-purple-200 transition-colors" />
                             </div>
-                            <span>{item.name}</span>
+                            <span className="text-xs">{item.name}</span>
                           </Link>
                         </motion.div>
                       ))}
@@ -186,13 +186,13 @@ export function Header() {
                   </nav>
                   
                   {/* Wallet Connection */}
-                  <div className="border-t border-purple-500/30 p-6 bg-dark-800/60">
+                  <div className="border-t border-purple-500/30 p-4 bg-dark-800/60">
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
+                      transition={{ delay: 0.2 }}
                     >
-                      <div className="text-sm text-gray-400 mb-3">Wallet Connection</div>
+                      <div className="text-xs text-gray-400 mb-2">Wallet Connection</div>
                       <div className="w-full">
                         <WalletConnect />
                       </div>

@@ -94,21 +94,55 @@ export default function SubmitPage() {
           }
         }
         
-        // Handle text (URLs)
+        // Handle text (URLs and general text)
         if (item.type === 'text/plain') {
           item.getAsString((text) => {
-            if (isValidUrl(text)) {
-              addLinkAttachment(text);
+            const trimmedText = text.trim();
+            if (isValidUrl(trimmedText)) {
+              addLinkAttachment(trimmedText);
               toast.success('Link pasted successfully!');
+            } else if (trimmedText.length > 0) {
+              // Handle pasted text in description or title
+              const focusedElement = document.activeElement as HTMLElement;
+              if (focusedElement?.tagName === 'TEXTAREA' || focusedElement?.tagName === 'INPUT') {
+                // Let the browser handle normal text pasting
+                return;
+              }
+              // If no input is focused, add as description
+              if (!formData.description.trim()) {
+                handleInputChange('description', trimmedText);
+                toast.success('Text pasted to description!');
+              }
             }
           });
+        }
+        
+        // Handle files
+        if (item.kind === 'file' && item.type.includes('pdf')) {
+          const file = item.getAsFile();
+          if (file) {
+            handleFiles([file]);
+            toast.success('PDF pasted successfully!');
+          }
         }
       }
     };
 
+    // Also handle keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !e.target) {
+        // Prevent default paste behavior when not in an input
+        e.preventDefault();
+      }
+    };
+
     document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [formData.description]);
 
   const isValidUrl = (string: string) => {
     try {

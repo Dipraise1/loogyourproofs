@@ -49,27 +49,17 @@ module.exports = {
         'xl': ['1.125rem', { lineHeight: '1.75rem' }],
       },
       boxShadow: {
-        // Sci-fi glow effects
-        'glow': '0 0 20px rgba(168, 139, 250, 0.6)',
-        'glow-lg': '0 0 40px rgba(168, 139, 250, 0.8)',
-        'neon': '0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor',
-        'inner-glow': 'inset 0 0 20px rgba(168, 139, 250, 0.3)',
+        // Clean shadows without glow
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
       },
       animation: {
-        'glow-pulse': 'glow-pulse 2s ease-in-out infinite alternate',
         'float': 'float 3s ease-in-out infinite',
         'slide-up': 'slide-up 0.5s ease-out',
         'fade-in': 'fade-in 0.3s ease-in',
       },
       keyframes: {
-        'glow-pulse': {
-          'from': { 
-            boxShadow: '0 0 20px rgba(168, 139, 250, 0.6), 0 0 30px rgba(168, 139, 250, 0.4)',
-          },
-          'to': { 
-            boxShadow: '0 0 30px rgba(168, 139, 250, 0.8), 0 0 40px rgba(168, 139, 250, 0.6)',
-          },
-        },
         'float': {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },

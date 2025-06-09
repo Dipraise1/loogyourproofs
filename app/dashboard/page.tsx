@@ -123,33 +123,45 @@ export default function DashboardPage() {
       
       <main className="pt-20 pb-12 px-4">
         <div className="container mx-auto max-w-7xl">
-          {/* Header Section */}
+          {/* Header Section with Background */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="relative mb-8 overflow-hidden rounded-lg"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2 text-purple-300">
-                  Your Portfolio
-                </h1>
-                <p className="text-gray-400 text-lg">
-                  Manage your decentralized proof-of-work submissions
-                </p>
-                {connectedWallet && (
-                  <p className="text-sm text-purple-400 font-mono mt-2">
-                    {connectedWallet.slice(0, 8)}...{connectedWallet.slice(-6)}
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src="https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=2940&auto=format&fit=crop"
+                alt="Portfolio workspace"
+                className="w-full h-full object-cover opacity-8"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-dark-900/90 via-dark-800/95 to-purple-900/85"></div>
+            </div>
+            
+            <div className="relative z-10 p-8">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2 text-purple-300">
+                    Your Portfolio
+                  </h1>
+                  <p className="text-gray-300 text-lg">
+                    Manage your decentralized proof-of-work submissions
                   </p>
-                )}
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                {!connectedWallet && <WalletConnect />}
-                <Link href="/submit" className="neon-button-primary inline-flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Submit New Proof
-                </Link>
+                  {connectedWallet && (
+                    <p className="text-sm text-purple-400 font-mono mt-2">
+                      {connectedWallet.slice(0, 8)}...{connectedWallet.slice(-6)}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {!connectedWallet && <WalletConnect />}
+                  <Link href="/submit" className="neon-button-primary inline-flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Submit New Proof
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>
