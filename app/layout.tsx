@@ -5,6 +5,7 @@ import { Providers } from './providers'
 import { Toaster } from 'react-hot-toast'
 // WalletDebug removed - will be conditionally imported in providers instead
 import './utils/phantomErrorSuppress' // Suppress Phantom service worker errors globally
+import { Analytics } from '@vercel/analytics/react'
 
 const poppins = Poppins({ 
   subsets: ['latin'],
@@ -114,13 +115,9 @@ export const metadata: Metadata = {
     'theme-color': '#8b5cf6',
   },
   icons: {
-    icon: '/image.png',
-    shortcut: '/image.png',
-    apple: '/image.png',
-    other: {
-      rel: 'apple-touch-icon-precomposed',
-      url: '/image.png',
-    },
+    icon: '/icon.png',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   }
 }
 
@@ -305,6 +302,7 @@ export default function RootLayout({
             
             {/* Debug component for development */}
             {/* WalletDebug moved to providers to avoid server component issues */}
+            <Analytics />
           </div>
         </Providers>
       </body>
