@@ -7,9 +7,17 @@ import Link from 'next/link';
 import { WalletConnect } from './WalletConnect';
 import Image from 'next/image';
 
+// Fallback logo component
+const FallbackLogo = () => (
+  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg">
+    S
+  </div>
+);
+
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,19 +56,23 @@ export function Header() {
           <Link href="/" className="flex items-center gap-3 group" onClick={closeMenu}>
             <div className="relative">
               <div className="w-10 h-10 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 bg-purple-600/20 border border-purple-500/30 relative">
-                <Image 
-                  src="/image.png" 
-                  alt="SaveYourProofs Logo" 
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-contain"
-                  onLoad={() => console.log('Logo loaded successfully')}
-                  onError={(e) => {
-                    console.error('Logo failed to load:', e);
-                  }}
-                  priority
-                  unoptimized
-                />
+                {logoError ? (
+                  <FallbackLogo />
+                ) : (
+                  <Image 
+                    src="/icon.png" 
+                    alt="SaveYourProofs Logo" 
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-contain"
+                    onLoad={() => console.log('Logo loaded successfully')}
+                    onError={(e) => {
+                      console.error('Logo failed to load, trying fallback:', e);
+                      setLogoError(true);
+                    }}
+                    priority
+                  />
+                )}
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
             </div>

@@ -15,23 +15,27 @@ export function suppressPhantomErrors() {
   console.error = (...args: any[]) => {
     const message = args.join(' ');
     
-    // Check for Phantom-specific error patterns
-    const phantomErrorPatterns = [
+    // Check for wallet-specific error patterns
+    const walletErrorPatterns = [
       'Failed to send message to service worker',
       'disconnected port object',
       '[PHANTOM]',
       'Attempting to use a disconnected port',
-      'The message port closed before a response was received'
+      'The message port closed before a response was received',
+      'solflare-detect-metamask',
+      'StreamMiddleware - Unknown response id',
+      'wallet-standard',
+      'wallet detection',
     ];
     
-    const isPhantomError = phantomErrorPatterns.some(pattern => 
-      message.includes(pattern)
+    const isWalletError = walletErrorPatterns.some(pattern => 
+      message.toLowerCase().includes(pattern.toLowerCase())
     );
     
-    // Only suppress Phantom service worker errors, not real errors
-    if (isPhantomError) {
+    // Only suppress wallet service worker errors, not real errors
+    if (isWalletError) {
       // Optionally log a quieter version for debugging
-      console.debug('Phantom communication (suppressed):', args[0]);
+      console.debug('Wallet communication (suppressed):', args[0]);
       return;
     }
     
@@ -62,16 +66,20 @@ export function suppressPhantomWindowErrors() {
     const msgStr = typeof message === 'string' ? message : '';
     const srcStr = source || '';
     
-    // Check if it's a Phantom-related error
-    const isPhantomError = 
+    // Check if it's a wallet-related error
+    const isWalletError = 
       msgStr.includes('Failed to send message to service worker') ||
       msgStr.includes('disconnected port object') ||
       msgStr.includes('[PHANTOM]') ||
+      msgStr.includes('solflare-detect-metamask') ||
+      msgStr.includes('StreamMiddleware') ||
+      msgStr.includes('wallet-standard') ||
       srcStr.includes('phantom') ||
+      srcStr.includes('solflare') ||
       srcStr.includes('contentScript');
     
-    if (isPhantomError) {
-      console.debug('🔇 Phantom extension error suppressed:', msgStr);
+    if (isWalletError) {
+      console.debug('🔇 Wallet extension error suppressed:', msgStr);
       return true; // Prevent default error handling
     }
     
