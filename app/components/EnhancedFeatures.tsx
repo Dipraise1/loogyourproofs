@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Upload, 
-  Image as ImageIcon, 
+import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Upload,
+  Image as ImageIcon,
   Link as LinkIcon,
   FileText,
   Paperclip,
@@ -13,9 +13,9 @@ import {
   AlertCircle,
   Info,
   Copy,
-  ExternalLink
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  ExternalLink,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 interface EnhancedUploadAreaProps {
   onFilesAdded: (files: File[]) => void;
@@ -25,15 +25,15 @@ interface EnhancedUploadAreaProps {
   className?: string;
 }
 
-export function EnhancedUploadArea({ 
-  onFilesAdded, 
-  onLinkAdded, 
-  accept = "image/*,.pdf,.doc,.docx", 
+export function EnhancedUploadArea({
+  onFilesAdded,
+  onLinkAdded,
+  accept = "image/*,.pdf,.doc,.docx",
   maxSize = 10,
-  className = ""
+  className = "",
 }: EnhancedUploadAreaProps) {
   const [isDragActive, setIsDragActive] = useState(false);
-  const [linkInput, setLinkInput] = useState('');
+  const [linkInput, setLinkInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -66,10 +66,12 @@ export function EnhancedUploadArea({
   };
 
   const handleFiles = (files: File[]) => {
-    const validFiles = files.filter(file => {
+    const validFiles = files.filter((file) => {
       const sizeInMB = file.size / (1024 * 1024);
       if (sizeInMB > maxSize) {
-        toast.error(`File ${file.name} is too large. Maximum size is ${maxSize}MB.`);
+        toast.error(
+          `File ${file.name} is too large. Maximum size is ${maxSize}MB.`
+        );
         return false;
       }
       return true;
@@ -77,7 +79,9 @@ export function EnhancedUploadArea({
 
     if (validFiles.length > 0) {
       onFilesAdded(validFiles);
-      toast.success(`${validFiles.length} file${validFiles.length > 1 ? 's' : ''} added successfully!`);
+      toast.success(
+        `${validFiles.length} file${validFiles.length > 1 ? "s" : ""} added successfully!`
+      );
     }
   };
 
@@ -91,10 +95,10 @@ export function EnhancedUploadArea({
     const url = linkInput.trim();
     if (url && isValidUrl(url)) {
       onLinkAdded(url);
-      setLinkInput('');
-      toast.success('Link added successfully!');
+      setLinkInput("");
+      toast.success("Link added successfully!");
     } else {
-      toast.error('Please enter a valid URL');
+      toast.error("Please enter a valid URL");
     }
   };
 
@@ -110,7 +114,7 @@ export function EnhancedUploadArea({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Paste Information */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-purple-500/10 border border-purple-400/30 rounded-lg p-4"
@@ -139,9 +143,10 @@ export function EnhancedUploadArea({
         onDrop={handleDrop}
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 cursor-pointer
-          ${isDragActive 
-            ? 'border-purple-400 bg-purple-500/20' 
-            : 'border-purple-500/30 bg-dark-800/20 hover:border-purple-400/50 hover:bg-dark-800/40'
+          ${
+            isDragActive
+              ? "border-purple-400 bg-purple-500/20"
+              : "border-purple-500/30 bg-dark-800/20 hover:border-purple-400/50 hover:bg-dark-800/40"
           }
         `}
         onClick={() => fileInputRef.current?.click()}
@@ -154,23 +159,30 @@ export function EnhancedUploadArea({
           onChange={handleFileSelect}
           className="hidden"
         />
-        
+
         <div className="space-y-4">
           <div className="flex justify-center">
-            <div className={`
+            <div
+              className={`
               p-4 rounded-full transition-all duration-300
-              ${isDragActive 
-                ? 'bg-purple-500/30 border border-purple-400' 
-                : 'bg-purple-500/20 border border-purple-500/40'
+              ${
+                isDragActive
+                  ? "bg-purple-500/30 border border-purple-400"
+                  : "bg-purple-500/20 border border-purple-500/40"
               }
-            `}>
-              <Upload className={`w-8 h-8 transition-colors ${isDragActive ? 'text-purple-300' : 'text-purple-400'}`} />
+            `}
+            >
+              <Upload
+                className={`w-8 h-8 transition-colors ${isDragActive ? "text-purple-300" : "text-purple-400"}`}
+              />
             </div>
           </div>
-          
+
           <div>
-            <p className={`text-lg font-medium transition-colors ${isDragActive ? 'text-purple-300' : 'text-gray-300'}`}>
-              {isDragActive ? 'Drop files here' : 'Upload Files'}
+            <p
+              className={`text-lg font-medium transition-colors ${isDragActive ? "text-purple-300" : "text-gray-300"}`}
+            >
+              {isDragActive ? "Drop files here" : "Upload Files"}
             </p>
             <p className="text-sm text-gray-400 mt-1">
               Drag & drop files, or click to browse
@@ -195,7 +207,7 @@ export function EnhancedUploadArea({
             placeholder="https://github.com/your-repo or https://your-demo.com"
             className="cyber-input flex-1"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 handleAddLink();
               }
@@ -217,7 +229,7 @@ export function EnhancedUploadArea({
 
 interface PasteIndicatorProps {
   show: boolean;
-  type: 'image' | 'text' | 'link';
+  type: "image" | "text" | "link";
   onClose: () => void;
 }
 
@@ -235,9 +247,9 @@ export function PasteIndicator({ show, type, onClose }: PasteIndicatorProps) {
 
   const getIcon = () => {
     switch (type) {
-      case 'image':
+      case "image":
         return <ImageIcon className="w-4 h-4" />;
-      case 'link':
+      case "link":
         return <LinkIcon className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -246,12 +258,12 @@ export function PasteIndicator({ show, type, onClose }: PasteIndicatorProps) {
 
   const getMessage = () => {
     switch (type) {
-      case 'image':
-        return 'Image pasted successfully!';
-      case 'link':
-        return 'Link detected and added!';
+      case "image":
+        return "Image pasted successfully!";
+      case "link":
+        return "Link detected and added!";
       default:
-        return 'Content pasted successfully!';
+        return "Content pasted successfully!";
     }
   };
 
@@ -278,7 +290,7 @@ export function PasteIndicator({ show, type, onClose }: PasteIndicatorProps) {
 interface AttachmentPreviewProps {
   attachment: {
     id: string;
-    type: 'image' | 'document' | 'link';
+    type: "image" | "document" | "link";
     name: string;
     url?: string;
     preview?: string;
@@ -287,26 +299,29 @@ interface AttachmentPreviewProps {
   onRemove: (id: string) => void;
 }
 
-export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewProps) {
+export function AttachmentPreview({
+  attachment,
+  onRemove,
+}: AttachmentPreviewProps) {
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getIcon = () => {
     switch (attachment.type) {
-      case 'image':
+      case "image":
         return <ImageIcon className="w-4 h-4 text-blue-400" />;
-      case 'link':
+      case "link":
         return <LinkIcon className="w-4 h-4 text-purple-400" />;
       default:
         return <FileText className="w-4 h-4 text-green-400" />;
     }
   };
-
+  console.log("attachment", attachment);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -315,10 +330,10 @@ export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewPro
       className="glass-panel p-4 rounded-lg"
     >
       <div className="flex items-start gap-3">
-        {attachment.type === 'image' && attachment.preview ? (
+        {attachment.type === "image" && attachment.preview ? (
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-dark-700 flex-shrink-0">
-            <img 
-              src={attachment.preview} 
+            <img
+              src={attachment.preview}
               alt={attachment.name}
               className="w-full h-full object-cover"
             />
@@ -328,7 +343,7 @@ export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewPro
             {getIcon()}
           </div>
         )}
-        
+
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">
             {attachment.name}
@@ -338,8 +353,8 @@ export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewPro
               {formatFileSize(attachment.size)}
             </p>
           )}
-          {attachment.type === 'link' && attachment.url && (
-            <a 
+          {attachment.type === "link" && attachment.url && (
+            <a
               href={attachment.url}
               target="_blank"
               rel="noopener noreferrer"
@@ -349,7 +364,7 @@ export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewPro
             </a>
           )}
         </div>
-        
+
         <button
           onClick={() => onRemove(attachment.id)}
           className="text-gray-400 hover:text-red-400 transition-colors p-1"
@@ -362,17 +377,23 @@ export function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewPro
   );
 }
 
-export function CopyToClipboard({ text, children }: { text: string; children: React.ReactNode }) {
+export function CopyToClipboard({
+  text,
+  children,
+}: {
+  text: string;
+  children: React.ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success('Copied to clipboard!');
+      toast.success("Copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy');
+      toast.error("Failed to copy");
     }
   };
 
@@ -386,4 +407,4 @@ export function CopyToClipboard({ text, children }: { text: string; children: Re
       {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
     </button>
   );
-} 
+}
