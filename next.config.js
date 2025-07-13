@@ -5,71 +5,85 @@ const nextConfig = {
       fs: false,
       net: false,
       tls: false,
-      crypto: require.resolve('crypto-browserify'),
-      stream: require.resolve('stream-browserify'),
-      url: require.resolve('url'),
-      zlib: require.resolve('browserify-zlib'),
-      http: require.resolve('stream-http'),
-      https: require.resolve('https-browserify'),
-      assert: require.resolve('assert'),
-      os: require.resolve('os-browserify'),
-      path: require.resolve('path-browserify'),
+      crypto: require.resolve("crypto-browserify"),
+      stream: require.resolve("stream-browserify"),
+      url: require.resolve("url"),
+      zlib: require.resolve("browserify-zlib"),
+      http: require.resolve("stream-http"),
+      https: require.resolve("https-browserify"),
+      assert: require.resolve("assert"),
+      os: require.resolve("os-browserify"),
+      path: require.resolve("path-browserify"),
     };
-    
-    config.externals.push('pino-pretty', 'lokijs', 'encoding');
-    
+
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+
     return config;
   },
   images: {
-    domains: ['gateway.pinata.cloud', 'ipfs.io'],
     unoptimized: false,
-    formats: ['image/webp', 'image/avif'],
+    formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "gateway.pinata.cloud",
+        port: "",
+        pathname: "",
+      },
+      {
+        protocol: "https",
+        hostname: "ipfs.io",
+        port: "",
+        pathname: "",
+      },
+    ],
   },
   env: {
-    NEXT_PUBLIC_PINATA_API_KEY: process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
-    NEXT_PUBLIC_PINATA_SECRET_API_KEY: process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY || '',
+    NEXT_PUBLIC_PINATA_API_KEY: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
+    NEXT_PUBLIC_PINATA_SECRET_API_KEY:
+      process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY || "",
   },
   // Ensure static assets are properly served
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
         ],
       },
       {
-        source: '/manifest.json',
+        source: "/manifest.json",
         headers: [
           {
-            key: 'Content-Type',
-            value: 'application/manifest+json',
+            key: "Content-Type",
+            value: "application/manifest+json",
           },
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
       {
-        source: '/(icon|favicon|apple-touch-icon)\\.(png|ico)',
+        source: "/(icon|favicon|apple-touch-icon)\\.(png|ico)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
@@ -77,4 +91,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;
