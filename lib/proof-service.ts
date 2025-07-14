@@ -1,9 +1,31 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ipfsService, ProofMetadata, IPFSUploadResult } from './ipfs';
+import { ProofMetadata, IPFSUploadResult } from './ipfs';
 import { SolanaService, ProofRecord } from './blockchain';
 import { Proof, Attachment, useAppStore } from './store';
 import { publicDataService } from './public-data-service';
 import toast from 'react-hot-toast';
+
+// Client-side IPFS service - only available in browser
+let ipfsService: any = null;
+
+// Lazy load IPFS service only on client side
+const getIPFSService = async () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  if (!ipfsService) {
+    try {
+      const { ipfsService: service } = await import('./ipfs');
+      ipfsService = service;
+    } catch (error) {
+      console.warn('Failed to load IPFS service:', error);
+      return null;
+    }
+  }
+  
+  return ipfsService;
+};
 
 export interface SubmissionData {
   title: string;
@@ -64,6 +86,11 @@ export class ProofSubmissionService {
       
       let metadataResult: IPFSUploadResult;
       try {
+        const ipfs = await getIPFSService();
+        if (!ipfs || !ipfs.isAvailable()) {
+          throw new Error('IPFS service not available');
+        }
+
         const metadata: ProofMetadata = {
           title: submissionData.title,
           description: submissionData.description,
@@ -82,7 +109,7 @@ export class ProofSubmissionService {
           clientAddress: submissionData.clientAddress,
         };
 
-        metadataResult = await ipfsService.uploadProofMetadata(metadata);
+        metadataResult = await ipfs.uploadProofMetadata(metadata);
       } catch (ipfsError) {
         console.warn('IPFS upload failed, using fallback storage:', ipfsError);
         // Fallback: create a mock hash for now
@@ -186,8 +213,9 @@ export class ProofSubmissionService {
       if (attachment.file) {
         try {
           // Check if IPFS is available
-          if (typeof window !== 'undefined' && ipfsService.isAvailable && ipfsService.isAvailable()) {
-            const result = await ipfsService.uploadFile(attachment.file);
+          const ipfs = await getIPFSService();
+          if (ipfs && ipfs.isAvailable()) {
+            const result = await ipfs.uploadFile(attachment.file);
             return {
               ...attachment,
               ipfsHash: result.hash,

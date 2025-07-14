@@ -1,6 +1,28 @@
-import { ipfsService, ProofMetadata, IPFSUploadResult } from './ipfs';
+import { ProofMetadata, IPFSUploadResult } from './ipfs';
 import { Proof, Freelancer } from './store';
 import toast from 'react-hot-toast';
+
+// Client-side IPFS service - only available in browser
+let ipfsService: any = null;
+
+// Lazy load IPFS service only on client side
+const getIPFSService = async () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  if (!ipfsService) {
+    try {
+      const { ipfsService: service } = await import('./ipfs');
+      ipfsService = service;
+    } catch (error) {
+      console.warn('Failed to load IPFS service:', error);
+      return null;
+    }
+  }
+  
+  return ipfsService;
+};
 
 export interface PublicDataRegistry {
   version: string;
@@ -82,18 +104,39 @@ class PublicDataService {
       
       let profileResult: IPFSUploadResult;
       try {
-        if (ipfsService.isAvailable && ipfsService.isAvailable()) {
-          const { create } = await import('ipfs-http-client');
-          const tempClient = create({ host: 'node0.preload.ipfs.io', port: 443, protocol: 'https' });
+        const ipfs = await getIPFSService();
+        if (ipfs && ipfs.isAvailable()) {
+          // Use our updated IPFS service
+          const profileBlob = new Blob([profileJson], { type: 'application/json' });
+          const formData = new FormData();
+          formData.append('file', profileBlob, `freelancer_${freelancer.walletAddress}.json`);
           
-          const result = await tempClient.add({
-            path: `freelancer_${freelancer.walletAddress}.json`,
-            content: profileBuffer,
-          }, { pin: true });
+          // Add metadata for Pinata
+          const metadata = {
+            name: `freelancer_${freelancer.walletAddress}.json`,
+            keyvalues: {
+              uploadedAt: new Date().toISOString(),
+              type: 'freelancer-profile'
+            }
+          };
+          formData.append('pinataMetadata', JSON.stringify(metadata));
 
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error(`Pinata upload failed: ${response.statusText}`);
+          }
+
+          const result = await response.json();
           profileResult = {
-            hash: result.cid.toString(),
-            url: `https://ipfs.io/ipfs/${result.cid.toString()}`,
+            hash: result.IpfsHash,
+            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
             size: profileBuffer.length
           };
         } else {
@@ -155,9 +198,10 @@ class PublicDataService {
       let proofResult: IPFSUploadResult;
 
       try {
-        if (ipfsService.isAvailable && ipfsService.isAvailable()) {
+        const ipfs = await getIPFSService();
+        if (ipfs && ipfs.isAvailable()) {
           // Upload metadata to IPFS
-          metadataResult = await ipfsService.uploadProofMetadata(publicMetadata);
+          metadataResult = await ipfs.uploadProofMetadata(publicMetadata);
           
           // Upload complete proof data to IPFS
           const proofJson = JSON.stringify({
@@ -167,19 +211,38 @@ class PublicDataService {
             lastUpdated: new Date().toISOString()
           }, null, 2);
           
-          const proofBuffer = Buffer.from(proofJson);
-          const { create } = await import('ipfs-http-client');
-          const tempClient = create({ host: 'node0.preload.ipfs.io', port: 443, protocol: 'https' });
+          // Upload complete proof data to IPFS using Pinata
+          const proofBlob = new Blob([proofJson], { type: 'application/json' });
+          const formData = new FormData();
+          formData.append('file', proofBlob, `proof_${proof.id}.json`);
           
-          const result = await tempClient.add({
-            path: `proof_${proof.id}.json`,
-            content: proofBuffer,
-          }, { pin: true });
+          // Add metadata for Pinata
+          const metadata = {
+            name: `proof_${proof.id}.json`,
+            keyvalues: {
+              uploadedAt: new Date().toISOString(),
+              type: 'proof-data'
+            }
+          };
+          formData.append('pinataMetadata', JSON.stringify(metadata));
 
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error(`Pinata upload failed: ${response.statusText}`);
+          }
+
+          const result = await response.json();
           proofResult = {
-            hash: result.cid.toString(),
-            url: `https://ipfs.io/ipfs/${result.cid.toString()}`,
-            size: proofBuffer.length
+            hash: result.IpfsHash,
+            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
+            size: proofJson.length
           };
         } else {
           throw new Error('IPFS not available');
@@ -251,8 +314,13 @@ class PublicDataService {
           } else {
             // Try to load from IPFS
             try {
-              const content = await ipfsService.getContent(freelancerRef.ipfsHash);
-              freelancerData = JSON.parse(content);
+              const ipfs = await getIPFSService();
+              if (ipfs) {
+                const content = await ipfs.getContent(freelancerRef.ipfsHash);
+                freelancerData = JSON.parse(content);
+              } else {
+                throw new Error('IPFS not available');
+              }
             } catch (ipfsError) {
               // Fallback to localStorage
               const saved = localStorage.getItem(`public_freelancer_${freelancerRef.walletAddress}`);
@@ -306,8 +374,13 @@ class PublicDataService {
           } else {
             // Try to load from IPFS
             try {
-              const content = await ipfsService.getContent(proofRef.ipfsHash);
-              proofData = JSON.parse(content);
+              const ipfs = await getIPFSService();
+              if (ipfs) {
+                const content = await ipfs.getContent(proofRef.ipfsHash);
+                proofData = JSON.parse(content);
+              } else {
+                throw new Error('IPFS not available');
+              }
             } catch (ipfsError) {
               // Fallback to localStorage
               const saved = localStorage.getItem(`public_proof_${proofRef.id}`);
@@ -420,19 +493,40 @@ class PublicDataService {
       let registryResult: IPFSUploadResult;
       
       try {
-        if (ipfsService.isAvailable && ipfsService.isAvailable()) {
-          const { create } = await import('ipfs-http-client');
-          const tempClient = create({ host: 'node0.preload.ipfs.io', port: 443, protocol: 'https' });
+        const ipfs = await getIPFSService();
+        if (ipfs && ipfs.isAvailable()) {
+          // Upload registry to IPFS using Pinata
+          const registryBlob = new Blob([registryJson], { type: 'application/json' });
+          const formData = new FormData();
+          formData.append('file', registryBlob, 'public_data_registry.json');
           
-          const result = await tempClient.add({
-            path: 'public_data_registry.json',
-            content: registryBuffer,
-          }, { pin: true });
+          // Add metadata for Pinata
+          const metadata = {
+            name: 'public_data_registry.json',
+            keyvalues: {
+              uploadedAt: new Date().toISOString(),
+              type: 'public-registry'
+            }
+          };
+          formData.append('pinataMetadata', JSON.stringify(metadata));
 
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error(`Pinata upload failed: ${response.statusText}`);
+          }
+
+          const result = await response.json();
           registryResult = {
-            hash: result.cid.toString(),
-            url: `https://ipfs.io/ipfs/${result.cid.toString()}`,
-            size: registryBuffer.length
+            hash: result.IpfsHash,
+            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
+            size: registryJson.length
           };
         } else {
           throw new Error('IPFS not available');
