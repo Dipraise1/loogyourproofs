@@ -11,7 +11,7 @@ export default function TestLogoPage() {
         <div>
           <h2 className="text-white mb-4">Regular img tag:</h2>
           <img 
-            src="/image.png" 
+            src="/icon.png" 
             alt="Test Logo Regular" 
             className="w-16 h-16 border border-white"
             onLoad={() => console.log('Regular img loaded')}
@@ -22,7 +22,7 @@ export default function TestLogoPage() {
         <div>
           <h2 className="text-white mb-4">Next.js Image component:</h2>
           <Image 
-            src="/image.png" 
+            src="/icon.png" 
             alt="Test Logo Next" 
             width={64}
             height={64}
@@ -37,7 +37,7 @@ export default function TestLogoPage() {
           <h2 className="text-white mb-4">Same styling as header:</h2>
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-600/20 border border-purple-500/30 relative">
             <Image 
-              src="/image.png" 
+              src="/icon.png" 
               alt="Test Logo Header Style" 
               width={40}
               height={40}

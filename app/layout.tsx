@@ -158,7 +158,7 @@ export default function RootLayout({
       url: siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${siteUrl}/image.png`,
+        url: `${siteUrl}/icon.png`,
         width: 512,
         height: 512
       },
@@ -175,7 +175,7 @@ export default function RootLayout({
       provider: {
         '@type': 'Organization',
         name: 'SaveYourProofs',
-        logo: `${siteUrl}/image.png`
+        logo: `${siteUrl}/icon.png`
       },
       areaServed: 'Worldwide',
       availableLanguage: 'English'
@@ -198,7 +198,7 @@ export default function RootLayout({
       }
     ],
     keywords: 'web3, blockchain, freelancer, portfolio, proof-of-work, solana, ethereum, ipfs, decentralized',
-    image: `${siteUrl}/image.png`
+    image: `${siteUrl}/icon.png`
   }
 
   return (
@@ -209,9 +209,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         {/* Favicons and app icons */}
-        <link rel="icon" href="/image.png" sizes="any" />
-        <link rel="icon" href="/image.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/image.png" />
+        <link rel="icon" href="/icon.png" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* PWA meta tags */}
@@ -254,8 +254,8 @@ export default function RootLayout({
                 price: '0',
                 priceCurrency: 'USD'
               },
-              image: `${siteUrl}/image.png`,
-              logo: `${siteUrl}/image.png`
+              image: `${siteUrl}/icon.png`,
+              logo: `${siteUrl}/icon.png`
             })
           }}
         />
