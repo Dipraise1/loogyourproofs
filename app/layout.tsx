@@ -15,15 +15,15 @@ const poppins = Poppins({
 
 const siteUrl = process.env.VERCEL_URL 
   ? `https://${process.env.VERCEL_URL}` 
-  : 'https://saveyourproofs.vercel.app'
+  : 'https://solgigs.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'SaveYourProofs - Decentralized Freelancer Portfolio & Proof-of-Work Platform',
-    template: '%s | SaveYourProofs'
+    default: 'SolGigs - Decentralized Freelancer Platform & Quick Tasks',
+    template: '%s | SolGigs'
   },
-  description: 'The leading Web3 platform for freelancers to create immutable proof-of-work portfolios. Connect your wallet, submit verified work evidence, earn client endorsements, and build your reputation on the blockchain. Powered by Solana, Ethereum, and IPFS.',
+  description: 'The leading Web3 platform for freelancers to find gigs and create immutable proof-of-work portfolios. Connect your wallet, submit verified work evidence, earn client endorsements, and build your reputation on the blockchain. Powered by Solana, Ethereum, and IPFS.',
   keywords: [
     'web3 freelancer platform',
     'blockchain portfolio',
@@ -46,9 +46,9 @@ export const metadata: Metadata = {
     'blockchain credentials',
     'web3 career platform'
   ],
-  authors: [{ name: 'SaveYourProofs Team', url: siteUrl }],
-  creator: 'SaveYourProofs',
-  publisher: 'SaveYourProofs',
+  authors: [{ name: 'SolGigs Team', url: siteUrl }],
+  creator: 'SolGigs',
+  publisher: 'SolGigs',
   formatDetection: {
     email: false,
     address: false,
@@ -60,32 +60,32 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    siteName: 'SaveYourProofs',
-    title: 'SaveYourProofs - Web3 Freelancer Portfolio & Blockchain Proof-of-Work Platform',
-    description: 'Build your immutable freelancer portfolio on the blockchain. Verify your work, earn endorsements, and establish your Web3 reputation with SaveYourProofs.',
+    siteName: 'SolGigs',
+    title: 'SolGigs - Web3 Freelancer Platform & Quick Tasks',
+    description: 'Find gigs and build your immutable freelancer portfolio on the blockchain. Verify your work, earn endorsements, and establish your Web3 reputation with SolGigs.',
     images: [
       {
         url: '/image.png',
         width: 1200,
         height: 630,
-        alt: 'SaveYourProofs - Decentralized Freelancer Platform Logo',
+        alt: 'SolGigs - Decentralized Freelancer Platform Logo',
         type: 'image/png',
       },
       {
         url: '/image.png',
         width: 512,
         height: 512,
-        alt: 'SaveYourProofs Logo',
+        alt: 'SolGigs Logo',
         type: 'image/png',
       }
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@SaveYourProofs',
-    creator: '@SaveYourProofs',
-    title: 'SaveYourProofs - Web3 Freelancer Portfolio Platform',
-    description: 'Create immutable proof-of-work portfolios on the blockchain. Join the future of freelancing with Web3.',
+    site: '@SolGigs',
+    creator: '@SolGigs',
+    title: 'SolGigs - Web3 Freelancer Platform',
+    description: 'Find gigs and create immutable proof-of-work portfolios on the blockchain. Join the future of freelancing with Web3.',
     images: ['/image.png'],
   },
   robots: {

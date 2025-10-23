@@ -1,12 +1,12 @@
-# SaveYourProofs - Decentralized Freelancer Portfolio
+# SolGigs - Decentralized Freelancer Platform
 
-![SaveYourProofs](https://img.shields.io/badge/SaveYourProofs-v1.0.0-purple)
+![SolGigs](https://img.shields.io/badge/SolGigs-v1.0.0-purple)
 ![Next.js](https://img.shields.io/badge/Next.js-14.0-black)
 ![Solana](https://img.shields.io/badge/Solana-Web3-green)
 ![IPFS](https://img.shields.io/badge/IPFS-Decentralized-blue)
 ![2025 Design](https://img.shields.io/badge/Design-2025%20Trends-pink)
 
-A fully functional decentralized web application where freelancers can log immutable proof-of-work submissions. Built with modern 2025 design trends featuring dark themes, purple accents, small refined typography, and cutting-edge Web3 functionality.
+A fully functional decentralized web application where freelancers can find gigs and log immutable proof-of-work submissions. Built with modern 2025 design trends featuring dark themes, purple accents, small refined typography, and cutting-edge Web3 functionality.
 
 ## ✨ Features
 

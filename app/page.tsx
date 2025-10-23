@@ -143,20 +143,20 @@ export default function HomePage() {
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent leading-tight">
-              Save Your Proofs
+              SolGigs
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              The first decentralized platform for freelancers to log immutable proof-of-work.
+              The first decentralized platform for social media engagement and proof-of-work verification.
               <br />
-              <span className="text-purple-300 font-medium">Connect your wallet. Submit evidence. Build trust.</span>
+              <span className="text-purple-300 font-medium">Follow. Engage. Get Paid. Build Trust.</span>
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <WalletConnect />
-              <Link href="/explore" className="neon-button-primary inline-flex items-center gap-2">
+              <Link href="/tasks" className="neon-button-primary inline-flex items-center gap-2">
                 <Search className="w-4 h-4" />
-                Explore Portfolios
+                Browse Tasks
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -377,7 +377,7 @@ export default function HomePage() {
               Ready to Build Your Decentralized Portfolio?
             </h2>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Join thousands of freelancers already using SaveYourProofs to showcase their work and build trust with clients.
+              Join thousands of freelancers already using SolGigs to find gigs, showcase their work and build trust with clients.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/submit" className="neon-button-primary inline-flex items-center gap-2">

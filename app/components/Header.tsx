@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Plus, User, Shield, Zap, Home } from 'lucide-react';
+import { Menu, X, Search, Plus, User, Shield, Zap, Home, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import { WalletConnect } from './WalletConnect';
 import Image from 'next/image';
@@ -30,6 +30,7 @@ export function Header() {
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
+    { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Explore', href: '/explore', icon: Search },
     { name: 'Dashboard', href: '/dashboard', icon: User },
     { name: 'Submit Proof', href: '/submit', icon: Plus },
@@ -61,7 +62,7 @@ export function Header() {
                 ) : (
                   <Image 
                     src="/icon.png" 
-                    alt="SaveYourProofs Logo" 
+                    alt="SolGigs Logo" 
                     width={40}
                     height={40}
                     className="w-full h-full object-contain"
@@ -78,7 +79,7 @@ export function Header() {
             </div>
             <div className="hidden sm:block">
               <span className="text-lg font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
-                SaveYourProofs
+                SolGigs
               </span>
               <div className="text-xs text-purple-400 font-mono">v1.0.0</div>
             </div>
@@ -219,7 +220,7 @@ export function Header() {
                       transition={{ delay: 0.5 }}
                       className="text-center"
                     >
-                      <div className="text-sm text-gray-400 mb-1">SaveYourProofs</div>
+                      <div className="text-sm text-gray-400 mb-1">SolGigs</div>
                       <div className="text-xs text-purple-400 font-mono">v1.0.0</div>
                       <div className="text-xs text-gray-500 mt-2">Decentralized Proof of Work</div>
                     </motion.div>
