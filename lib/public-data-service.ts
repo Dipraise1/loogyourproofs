@@ -1,28 +1,6 @@
-import { ProofMetadata, IPFSUploadResult } from './ipfs';
+import { supabase } from './supabase';
 import { Proof, Freelancer } from './store';
 import toast from 'react-hot-toast';
-
-// Client-side IPFS service - only available in browser
-let ipfsService: any = null;
-
-// Lazy load IPFS service only on client side
-const getIPFSService = async () => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
-  if (!ipfsService) {
-    try {
-      const { ipfsService: service } = await import('./ipfs');
-      ipfsService = service;
-    } catch (error) {
-      console.warn('Failed to load IPFS service:', error);
-      return null;
-    }
-  }
-  
-  return ipfsService;
-};
 
 export interface PublicDataRegistry {
   version: string;
@@ -31,14 +9,14 @@ export interface PublicDataRegistry {
   totalProofs: number;
   freelancers: {
     walletAddress: string;
-    ipfsHash: string;
+    supabaseId: string;
     lastUpdated: string;
   }[];
   proofs: {
     id: string;
     walletAddress: string;
-    ipfsHash: string;
-    metadataHash: string;
+    supabaseId: string;
+    metadataId: string;
     lastUpdated: string;
   }[];
 }
@@ -59,12 +37,12 @@ export interface FreelancerProfile {
     website?: string;
   };
   proofIds: string[];
-  ipfsHashes: string[];
+  supabaseIds: string[];
   lastUpdated: string;
 }
 
 class PublicDataService {
-  private registryHash: string | null = null;
+  private registryId: string | null = null;
   private localRegistry: PublicDataRegistry | null = null;
 
   /**
@@ -73,9 +51,9 @@ class PublicDataService {
   async initialize(): Promise<void> {
     try {
       // Try to load the registry from localStorage first
-      const savedRegistryHash = localStorage.getItem('public_registry_hash');
-      if (savedRegistryHash) {
-        this.registryHash = savedRegistryHash;
+      const savedRegistryId = localStorage.getItem('public_registry_id');
+      if (savedRegistryId) {
+        this.registryId = savedRegistryId;
         await this.loadRegistry();
       }
     } catch (error) {
@@ -86,7 +64,7 @@ class PublicDataService {
   }
 
   /**
-   * Store a freelancer profile to IPFS and update the public registry
+   * Store a freelancer profile to Supabase and update the public registry
    */
   async storeFreelancerPublic(freelancer: Freelancer): Promise<string> {
     try {
@@ -94,75 +72,39 @@ class PublicDataService {
       const publicProfile: FreelancerProfile = {
         ...freelancer,
         proofIds: [],
-        ipfsHashes: [],
+        supabaseIds: [],
         lastUpdated: new Date().toISOString()
       };
 
-      // Upload freelancer profile to IPFS
-      const profileJson = JSON.stringify(publicProfile, null, 2);
-      const profileBuffer = Buffer.from(profileJson);
-      
-      let profileResult: IPFSUploadResult;
-      try {
-        const ipfs = await getIPFSService();
-        if (ipfs && ipfs.isAvailable()) {
-          // Use our updated IPFS service
-          const profileBlob = new Blob([profileJson], { type: 'application/json' });
-          const formData = new FormData();
-          formData.append('file', profileBlob, `freelancer_${freelancer.walletAddress}.json`);
-          
-          // Add metadata for Pinata
-          const metadata = {
-            name: `freelancer_${freelancer.walletAddress}.json`,
-            keyvalues: {
-              uploadedAt: new Date().toISOString(),
-              type: 'freelancer-profile'
-            }
-          };
-          formData.append('pinataMetadata', JSON.stringify(metadata));
+      // Store freelancer profile in Supabase
+      const { data, error } = await supabase
+        .from('public_freelancers')
+        .upsert({
+          wallet_address: freelancer.walletAddress,
+          profile_data: publicProfile,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-            },
-            body: formData
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pinata upload failed: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          profileResult = {
-            hash: result.IpfsHash,
-            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
-            size: profileBuffer.length
-          };
-        } else {
-          throw new Error('IPFS not available');
-        }
-      } catch (ipfsError) {
-        console.warn('IPFS upload failed, creating fallback hash:', ipfsError);
-        // Create a deterministic hash for fallback
-        profileResult = {
-          hash: `freelancer_${freelancer.walletAddress}_${Date.now()}`,
-          url: `#local-freelancer-${freelancer.walletAddress}`,
-          size: profileBuffer.length
-        };
+      if (error) {
+        throw new Error(`Supabase upload failed: ${error.message}`);
       }
 
+      const profileId = data.id;
+
       // Update public registry
-      await this.updateFreelancerInRegistry(freelancer.walletAddress, profileResult.hash);
+      await this.updateFreelancerInRegistry(freelancer.walletAddress, profileId);
 
       // Save to localStorage as backup
       localStorage.setItem(`public_freelancer_${freelancer.walletAddress}`, JSON.stringify({
         ...publicProfile,
-        ipfsHash: profileResult.hash
+        supabaseId: profileId
       }));
 
-      toast.success(`Freelancer profile stored publicly: ${profileResult.hash.substring(0, 12)}...`);
-      return profileResult.hash;
+      toast.success(`Freelancer profile stored publicly: ${profileId.substring(0, 12)}...`);
+      return profileId;
     } catch (error) {
       console.error('Failed to store freelancer publicly:', error);
       toast.error('Failed to store profile publicly');
@@ -171,12 +113,12 @@ class PublicDataService {
   }
 
   /**
-   * Store a proof to IPFS and update the public registry
+   * Store a proof to Supabase and update the public registry
    */
-  async storeProofPublic(proof: Proof): Promise<{ proofHash: string; metadataHash: string }> {
+  async storeProofPublic(proof: Proof): Promise<{ proofId: string; metadataId: string }> {
     try {
       // Create public proof metadata
-      const publicMetadata: ProofMetadata = {
+      const publicMetadata = {
         title: proof.title,
         description: proof.description,
         type: proof.type,
@@ -185,7 +127,7 @@ class PublicDataService {
         walletAddress: proof.walletAddress,
         attachments: proof.attachments?.map(att => ({
           name: att.name,
-          hash: att.ipfsHash || 'local',
+          url: att.url || '',
           type: att.type,
           size: att.size || 0,
         })) || [],
@@ -194,89 +136,63 @@ class PublicDataService {
         clientAddress: proof.clientAddress,
       };
 
-      let metadataResult: IPFSUploadResult;
-      let proofResult: IPFSUploadResult;
+      // Store metadata in Supabase
+      const { data: metadataData, error: metadataError } = await supabase
+        .from('public_proof_metadata')
+        .upsert({
+          proof_id: proof.id,
+          metadata: publicMetadata,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      try {
-        const ipfs = await getIPFSService();
-        if (ipfs && ipfs.isAvailable()) {
-          // Upload metadata to IPFS
-          metadataResult = await ipfs.uploadProofMetadata(publicMetadata);
-          
-          // Upload complete proof data to IPFS
-          const proofJson = JSON.stringify({
-            ...proof,
-            publicMetadataHash: metadataResult.hash,
-            isPublic: true,
-            lastUpdated: new Date().toISOString()
-          }, null, 2);
-          
-          // Upload complete proof data to IPFS using Pinata
-          const proofBlob = new Blob([proofJson], { type: 'application/json' });
-          const formData = new FormData();
-          formData.append('file', proofBlob, `proof_${proof.id}.json`);
-          
-          // Add metadata for Pinata
-          const metadata = {
-            name: `proof_${proof.id}.json`,
-            keyvalues: {
-              uploadedAt: new Date().toISOString(),
-              type: 'proof-data'
-            }
-          };
-          formData.append('pinataMetadata', JSON.stringify(metadata));
-
-          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-            },
-            body: formData
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pinata upload failed: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          proofResult = {
-            hash: result.IpfsHash,
-            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
-            size: proofJson.length
-          };
-        } else {
-          throw new Error('IPFS not available');
-        }
-      } catch (ipfsError) {
-        console.warn('IPFS upload failed, creating fallback hashes:', ipfsError);
-        // Create deterministic hashes for fallback
-        metadataResult = {
-          hash: `metadata_${proof.id}_${Date.now()}`,
-          url: `#local-metadata-${proof.id}`,
-          size: 0
-        };
-        proofResult = {
-          hash: `proof_${proof.id}_${Date.now()}`,
-          url: `#local-proof-${proof.id}`,
-          size: 0
-        };
+      if (metadataError) {
+        throw new Error(`Supabase metadata upload failed: ${metadataError.message}`);
       }
 
+      const metadataId = metadataData.id;
+
+      // Store complete proof data in Supabase
+      const { data: proofData, error: proofError } = await supabase
+        .from('public_proofs')
+        .upsert({
+          proof_id: proof.id,
+          wallet_address: proof.walletAddress,
+          proof_data: {
+            ...proof,
+            publicMetadataId: metadataId,
+            isPublic: true,
+            lastUpdated: new Date().toISOString()
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (proofError) {
+        throw new Error(`Supabase proof upload failed: ${proofError.message}`);
+      }
+
+      const proofId = proofData.id;
+
       // Update public registry
-      await this.updateProofInRegistry(proof.id, proof.walletAddress, proofResult.hash, metadataResult.hash);
+      await this.updateProofInRegistry(proof.id, proof.walletAddress, proofId, metadataId);
 
       // Save to localStorage as backup
       localStorage.setItem(`public_proof_${proof.id}`, JSON.stringify({
         ...proof,
-        proofIpfsHash: proofResult.hash,
-        metadataIpfsHash: metadataResult.hash,
+        proofSupabaseId: proofId,
+        metadataSupabaseId: metadataId,
         isPublic: true
       }));
 
-      toast.success(`Proof stored publicly: ${proofResult.hash.substring(0, 12)}...`);
+      toast.success(`Proof stored publicly: ${proofId.substring(0, 12)}...`);
       return { 
-        proofHash: proofResult.hash, 
-        metadataHash: metadataResult.hash 
+        proofId: proofId, 
+        metadataId: metadataId 
       };
     } catch (error) {
       console.error('Failed to store proof publicly:', error);
@@ -302,33 +218,26 @@ class PublicDataService {
         try {
           let freelancerData: FreelancerProfile;
           
-          // Try to load from IPFS first
-          if (freelancerRef.ipfsHash.startsWith('freelancer_')) {
-            // This is a fallback hash, load from localStorage
+          // Try to load from Supabase first
+          try {
+            const { data, error } = await supabase
+              .from('public_freelancers')
+              .select('profile_data')
+              .eq('id', freelancerRef.supabaseId)
+              .single();
+
+            if (error) {
+              throw new Error(`Supabase query failed: ${error.message}`);
+            }
+
+            freelancerData = data.profile_data;
+          } catch (supabaseError) {
+            // Fallback to localStorage
             const saved = localStorage.getItem(`public_freelancer_${freelancerRef.walletAddress}`);
             if (saved) {
               freelancerData = JSON.parse(saved);
             } else {
               continue;
-            }
-          } else {
-            // Try to load from IPFS
-            try {
-              const ipfs = await getIPFSService();
-              if (ipfs) {
-                const content = await ipfs.getContent(freelancerRef.ipfsHash);
-                freelancerData = JSON.parse(content);
-              } else {
-                throw new Error('IPFS not available');
-              }
-            } catch (ipfsError) {
-              // Fallback to localStorage
-              const saved = localStorage.getItem(`public_freelancer_${freelancerRef.walletAddress}`);
-              if (saved) {
-                freelancerData = JSON.parse(saved);
-              } else {
-                continue;
-              }
             }
           }
           
@@ -362,33 +271,26 @@ class PublicDataService {
         try {
           let proofData: Proof;
           
-          // Try to load from IPFS first
-          if (proofRef.ipfsHash.startsWith('proof_')) {
-            // This is a fallback hash, load from localStorage
+          // Try to load from Supabase first
+          try {
+            const { data, error } = await supabase
+              .from('public_proofs')
+              .select('proof_data')
+              .eq('id', proofRef.supabaseId)
+              .single();
+
+            if (error) {
+              throw new Error(`Supabase query failed: ${error.message}`);
+            }
+
+            proofData = data.proof_data;
+          } catch (supabaseError) {
+            // Fallback to localStorage
             const saved = localStorage.getItem(`public_proof_${proofRef.id}`);
             if (saved) {
               proofData = JSON.parse(saved);
             } else {
               continue;
-            }
-          } else {
-            // Try to load from IPFS
-            try {
-              const ipfs = await getIPFSService();
-              if (ipfs) {
-                const content = await ipfs.getContent(proofRef.ipfsHash);
-                proofData = JSON.parse(content);
-              } else {
-                throw new Error('IPFS not available');
-              }
-            } catch (ipfsError) {
-              // Fallback to localStorage
-              const saved = localStorage.getItem(`public_proof_${proofRef.id}`);
-              if (saved) {
-                proofData = JSON.parse(saved);
-              } else {
-                continue;
-              }
             }
           }
           
@@ -444,24 +346,25 @@ class PublicDataService {
 
   private async loadRegistry(): Promise<void> {
     try {
-      if (this.registryHash) {
-        if (this.registryHash.startsWith('registry_')) {
-          // Fallback hash, load from localStorage
+      if (this.registryId) {
+        // Try to load from Supabase first
+        try {
+          const { data, error } = await supabase
+            .from('public_registry')
+            .select('registry_data')
+            .eq('id', this.registryId)
+            .single();
+
+          if (error) {
+            throw new Error(`Supabase query failed: ${error.message}`);
+          }
+
+          this.localRegistry = data.registry_data;
+        } catch (supabaseError) {
+          // Fallback to localStorage
           const saved = localStorage.getItem('public_data_registry');
           if (saved) {
             this.localRegistry = JSON.parse(saved);
-          }
-        } else {
-          // Try to load from IPFS
-          try {
-            const content = await ipfsService.getContent(this.registryHash);
-            this.localRegistry = JSON.parse(content);
-          } catch (ipfsError) {
-            // Fallback to localStorage
-            const saved = localStorage.getItem('public_data_registry');
-            if (saved) {
-              this.localRegistry = JSON.parse(saved);
-            }
           }
         }
       }
@@ -488,71 +391,37 @@ class PublicDataService {
 
     try {
       const registryJson = JSON.stringify(this.localRegistry, null, 2);
-      const registryBuffer = Buffer.from(registryJson);
 
-      let registryResult: IPFSUploadResult;
-      
-      try {
-        const ipfs = await getIPFSService();
-        if (ipfs && ipfs.isAvailable()) {
-          // Upload registry to IPFS using Pinata
-          const registryBlob = new Blob([registryJson], { type: 'application/json' });
-          const formData = new FormData();
-          formData.append('file', registryBlob, 'public_data_registry.json');
-          
-          // Add metadata for Pinata
-          const metadata = {
-            name: 'public_data_registry.json',
-            keyvalues: {
-              uploadedAt: new Date().toISOString(),
-              type: 'public-registry'
-            }
-          };
-          formData.append('pinataMetadata', JSON.stringify(metadata));
+      // Store registry in Supabase
+      const { data, error } = await supabase
+        .from('public_registry')
+        .upsert({
+          registry_data: this.localRegistry,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-            },
-            body: formData
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pinata upload failed: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          registryResult = {
-            hash: result.IpfsHash,
-            url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
-            size: registryJson.length
-          };
-        } else {
-          throw new Error('IPFS not available');
-        }
-      } catch (ipfsError) {
-        console.warn('IPFS registry save failed, using fallback:', ipfsError);
-        registryResult = {
-          hash: `registry_${Date.now()}`,
-          url: '#local-registry',
-          size: registryBuffer.length
-        };
+      if (error) {
+        throw new Error(`Supabase registry save failed: ${error.message}`);
       }
 
-      this.registryHash = registryResult.hash;
+      this.registryId = data.id;
       
       // Save to localStorage as backup
-      localStorage.setItem('public_registry_hash', this.registryHash);
+      if (this.registryId) {
+        localStorage.setItem('public_registry_id', this.registryId);
+      }
       localStorage.setItem('public_data_registry', registryJson);
       
-      console.log(`Public registry saved: ${this.registryHash}`);
+      console.log(`Public registry saved: ${this.registryId}`);
     } catch (error) {
       console.error('Failed to save registry:', error);
     }
   }
 
-  private async updateFreelancerInRegistry(walletAddress: string, ipfsHash: string): Promise<void> {
+  private async updateFreelancerInRegistry(walletAddress: string, supabaseId: string): Promise<void> {
     await this.ensureRegistry();
     
     if (!this.localRegistry) return;
@@ -560,7 +429,7 @@ class PublicDataService {
     const existingIndex = this.localRegistry.freelancers.findIndex(f => f.walletAddress === walletAddress);
     const freelancerRef = {
       walletAddress,
-      ipfsHash,
+      supabaseId,
       lastUpdated: new Date().toISOString()
     };
 
@@ -575,7 +444,7 @@ class PublicDataService {
     await this.saveRegistry();
   }
 
-  private async updateProofInRegistry(id: string, walletAddress: string, ipfsHash: string, metadataHash: string): Promise<void> {
+  private async updateProofInRegistry(id: string, walletAddress: string, supabaseId: string, metadataId: string): Promise<void> {
     await this.ensureRegistry();
     
     if (!this.localRegistry) return;
@@ -584,8 +453,8 @@ class PublicDataService {
     const proofRef = {
       id,
       walletAddress,
-      ipfsHash,
-      metadataHash,
+      supabaseId,
+      metadataId,
       lastUpdated: new Date().toISOString()
     };
 
@@ -647,10 +516,10 @@ class PublicDataService {
   }
 
   /**
-   * Get the current public registry hash (for sharing/verification)
+   * Get the current public registry ID (for sharing/verification)
    */
-  getRegistryHash(): string | null {
-    return this.registryHash;
+  getRegistryId(): string | null {
+    return this.registryId;
   }
 
   /**
@@ -670,4 +539,4 @@ class PublicDataService {
 }
 
 // Create singleton instance
-export const publicDataService = new PublicDataService(); 
+export const publicDataService = new PublicDataService();

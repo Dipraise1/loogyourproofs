@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Plus, User, Shield, Zap, Home, Briefcase } from 'lucide-react';
+import { Menu, X, Search, Plus, User, Shield, Zap, Home, Briefcase, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { WalletConnect } from './WalletConnect';
 import Image from 'next/image';
@@ -33,6 +33,7 @@ export function Header() {
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Explore', href: '/explore', icon: Search },
     { name: 'Dashboard', href: '/dashboard', icon: User },
+    { name: 'Profile', href: '/profile', icon: Settings },
     { name: 'Submit Proof', href: '/submit', icon: Plus },
   ];
 

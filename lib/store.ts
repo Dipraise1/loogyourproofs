@@ -1,8 +1,26 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ProofRecord, EndorsementRecord } from './blockchain';
-import { ProofMetadata } from './ipfs';
-import { publicDataService } from './public-data-service';
+import { supabaseService } from './supabase';
+import { User } from './user-service';
+
+export interface ProofMetadata {
+  title: string;
+  description: string;
+  type: string;
+  tags: string[];
+  timestamp: string;
+  walletAddress: string;
+  attachments: Array<{
+    name: string;
+    hash: string;
+    type: string;
+    size: number;
+  }>;
+  githubRepo?: string;
+  liveDemo?: string;
+  clientAddress: string;
+}
 
 export interface Attachment {
   id: string;
@@ -55,6 +73,10 @@ interface AppState {
   connectedWallet: string | null;
   walletType: 'phantom' | 'metamask' | 'solflare' | null;
   
+  // User data
+  currentUser: User | null;
+  users: User[];
+  
   // Proofs
   proofs: Proof[];
   userProofs: Proof[];
@@ -69,6 +91,10 @@ interface AppState {
   
   // Actions
   setConnectedWallet: (address: string | null, type: 'phantom' | 'metamask' | 'solflare' | null) => void;
+  setCurrentUser: (user: User | null) => void;
+  setUsers: (users: User[]) => void;
+  addUser: (user: User) => void;
+  updateUser: (walletAddress: string, updates: Partial<User>) => void;
   addProof: (proof: Proof) => void;
   updateProof: (id: string, updates: Partial<Proof>) => void;
   removeProof: (id: string) => void;
@@ -105,6 +131,8 @@ export const useAppStore = create<AppState>()(
       // Initial state
       connectedWallet: null,
       walletType: null,
+      currentUser: null,
+      users: [],
       proofs: [],
       userProofs: [],
       freelancers: [],
@@ -134,9 +162,24 @@ export const useAppStore = create<AppState>()(
             }
           }, 100);
         } else {
-          set({ userProofs: [], currentFreelancer: null });
+          set({ userProofs: [], currentFreelancer: null, currentUser: null });
         }
       },
+
+      // User actions
+      setCurrentUser: (user) => set({ currentUser: user }),
+      setUsers: (users) => set({ users }),
+      addUser: (user) => set((state) => ({ 
+        users: [...state.users.filter(u => u.wallet_address !== user.wallet_address), user]
+      })),
+      updateUser: (walletAddress, updates) => set((state) => ({
+        users: state.users.map(user => 
+          user.wallet_address === walletAddress ? { ...user, ...updates } : user
+        ),
+        currentUser: state.currentUser?.wallet_address === walletAddress 
+          ? { ...state.currentUser, ...updates } 
+          : state.currentUser
+      })),
 
       // Proof actions
       addProof: (proof) => {
@@ -265,14 +308,31 @@ export const useAppStore = create<AppState>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Load from public IPFS first, then fallback to localStorage
+          // Load from Supabase first, then fallback to localStorage
           let userProofs: Proof[] = [];
           
           try {
-            userProofs = await publicDataService.getFreelancerPublicProofs(walletAddress);
-            console.log(`Loaded ${userProofs.length} proofs from public IPFS for ${walletAddress}`);
-          } catch (publicError) {
-            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
+            const supabaseProofs = await supabaseService.getProofsByWallet(walletAddress);
+            userProofs = supabaseProofs.map((proofRecord: any) => ({
+              id: proofRecord.id,
+              title: proofRecord.title,
+              description: proofRecord.description,
+              type: proofRecord.type,
+              tags: proofRecord.tags,
+              attachments: proofRecord.attachments,
+              githubRepo: proofRecord.github_repo,
+              liveDemo: proofRecord.live_demo,
+              clientAddress: proofRecord.client_address,
+              walletAddress: proofRecord.wallet_address,
+              ipfsHash: proofRecord.ipfs_hash,
+              timestamp: proofRecord.timestamp,
+              status: proofRecord.status,
+              blockchainRecord: proofRecord.blockchain_record,
+              endorsements: proofRecord.endorsements,
+            }));
+            console.log(`Loaded ${userProofs.length} proofs from Supabase for ${walletAddress}`);
+          } catch (supabaseError) {
+            console.warn('Failed to load from Supabase, using localStorage:', supabaseError);
             // Fallback to localStorage
             const stored = localStorage.getItem(`proofs_${walletAddress}`);
             if (stored) {
@@ -291,14 +351,31 @@ export const useAppStore = create<AppState>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Load from public IPFS first, then fallback to localStorage
+          // Load from Supabase first, then fallback to localStorage
           let proofs: Proof[] = [];
           
           try {
-            proofs = await publicDataService.getAllPublicProofs();
-            console.log(`Loaded ${proofs.length} proofs from public IPFS`);
-          } catch (publicError) {
-            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
+            const supabaseProofs = await supabaseService.getAllProofs();
+            proofs = supabaseProofs.map((proofRecord: any) => ({
+              id: proofRecord.id,
+              title: proofRecord.title,
+              description: proofRecord.description,
+              type: proofRecord.type,
+              tags: proofRecord.tags,
+              attachments: proofRecord.attachments,
+              githubRepo: proofRecord.github_repo,
+              liveDemo: proofRecord.live_demo,
+              clientAddress: proofRecord.client_address,
+              walletAddress: proofRecord.wallet_address,
+              ipfsHash: proofRecord.ipfs_hash,
+              timestamp: proofRecord.timestamp,
+              status: proofRecord.status,
+              blockchainRecord: proofRecord.blockchain_record,
+              endorsements: proofRecord.endorsements,
+            }));
+            console.log(`Loaded ${proofs.length} proofs from Supabase`);
+          } catch (supabaseError) {
+            console.warn('Failed to load from Supabase, using localStorage:', supabaseError);
             // Fallback to localStorage
             const stored = localStorage.getItem('all_proofs');
             if (stored) {
@@ -321,28 +398,14 @@ export const useAppStore = create<AppState>()(
           let freelancers: Freelancer[] = [];
           
           try {
-            const publicFreelancers = await publicDataService.getAllPublicFreelancers();
-            // Convert public freelancer profiles to store format
-            freelancers = publicFreelancers.map(pf => ({
-              walletAddress: pf.walletAddress,
-              name: pf.name,
-              bio: pf.bio,
-              avatar: pf.avatar,
-              specialties: pf.specialties,
-              rating: pf.rating,
-              totalProofs: pf.totalProofs,
-              totalEndorsements: pf.totalEndorsements,
-              joinedAt: pf.joinedAt,
-              social: pf.social
-            }));
-            console.log(`Loaded ${freelancers.length} freelancers from public IPFS`);
-          } catch (publicError) {
-            console.warn('Failed to load from public IPFS, using localStorage:', publicError);
-            // Fallback to localStorage
+            // Load from localStorage for now (will be replaced with Supabase)
             const stored = localStorage.getItem('freelancers');
             if (stored) {
               freelancers = JSON.parse(stored);
             }
+            console.log(`Loaded ${freelancers.length} freelancers from localStorage`);
+          } catch (error) {
+            console.warn('Failed to load freelancers:', error);
           }
           
           set({ freelancers, isLoading: false });

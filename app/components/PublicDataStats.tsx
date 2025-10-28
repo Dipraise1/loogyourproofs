@@ -20,7 +20,7 @@ export function PublicDataStats() {
     const loadStats = async () => {
       try {
         const registryStats = await publicDataService.getRegistryStats();
-        const hash = publicDataService.getRegistryHash();
+        const hash = publicDataService.getRegistryId();
         
         setStats(registryStats);
         setRegistryHash(hash);

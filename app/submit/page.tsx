@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Header } from '../components/Header';
 import { WalletConnect } from '../components/WalletConnect';
-import { proofService } from '../../lib/proof-service';
+import { proofService } from '../../lib/supabase-proof-service';
 import { useAppStore } from '../../lib/store';
 import toast from 'react-hot-toast';
 

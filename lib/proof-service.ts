@@ -1,31 +1,10 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ProofMetadata, IPFSUploadResult } from './ipfs';
+import { fileUploadService } from './file-upload-service';
 import { SolanaService, ProofRecord } from './blockchain';
 import { Proof, Attachment, useAppStore } from './store';
 import { publicDataService } from './public-data-service';
 import toast from 'react-hot-toast';
 
-// Client-side IPFS service - only available in browser
-let ipfsService: any = null;
-
-// Lazy load IPFS service only on client side
-const getIPFSService = async () => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
-  if (!ipfsService) {
-    try {
-      const { ipfsService: service } = await import('./ipfs');
-      ipfsService = service;
-    } catch (error) {
-      console.warn('Failed to load IPFS service:', error);
-      return null;
-    }
-  }
-  
-  return ipfsService;
-};
 
 export interface SubmissionData {
   title: string;
@@ -72,8 +51,8 @@ export class ProofSubmissionService {
     addProof(initialProof);
 
     try {
-      // Step 1: Upload attachments to IPFS
-      toast.loading('Uploading files to IPFS...', { id: proofId });
+      // Step 1: Upload attachments to Supabase Storage
+      toast.loading('Uploading files to Supabase Storage...', { id: proofId });
       const uploadedAttachments = await this.uploadAttachments(submissionData.attachments);
       
       updateProof(proofId, { 
@@ -81,55 +60,38 @@ export class ProofSubmissionService {
         status: 'uploading' 
       });
 
-      // Step 2: Create and upload metadata to IPFS
+      // Step 2: Create metadata record
       toast.loading('Creating metadata record...', { id: proofId });
       
-      let metadataResult: IPFSUploadResult;
-      try {
-        const ipfs = await getIPFSService();
-        if (!ipfs || !ipfs.isAvailable()) {
-          throw new Error('IPFS service not available');
-        }
+      const metadata = {
+        title: submissionData.title,
+        description: submissionData.description,
+        type: submissionData.type,
+        tags: submissionData.tags,
+        timestamp: new Date().toISOString(),
+        walletAddress,
+        attachments: uploadedAttachments.map(att => ({
+          name: att.name,
+          url: att.url || '',
+          type: att.type,
+          size: att.size || 0,
+        })),
+        githubRepo: submissionData.githubRepo,
+        liveDemo: submissionData.liveDemo,
+        clientAddress: submissionData.clientAddress,
+      };
 
-        const metadata: ProofMetadata = {
-          title: submissionData.title,
-          description: submissionData.description,
-          type: submissionData.type,
-          tags: submissionData.tags,
-          timestamp: new Date().toISOString(),
-          walletAddress,
-          attachments: uploadedAttachments.map(att => ({
-            name: att.name,
-            hash: att.ipfsHash || '',
-            type: att.type,
-            size: att.size || 0,
-          })),
-          githubRepo: submissionData.githubRepo,
-          liveDemo: submissionData.liveDemo,
-          clientAddress: submissionData.clientAddress,
-        };
-
-        metadataResult = await ipfs.uploadProofMetadata(metadata);
-      } catch (ipfsError) {
-        console.warn('IPFS upload failed, using fallback storage:', ipfsError);
-        // Fallback: create a mock hash for now
-        metadataResult = {
-          hash: `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          url: `#fallback-${proofId}`,
-          size: 0
-        };
-        toast.loading('Using local storage (IPFS unavailable)...', { id: proofId });
-      }
+      const metadataHash = `metadata_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       updateProof(proofId, { 
-        ipfsHash: metadataResult.hash,
+        ipfsHash: metadataHash,
         status: 'uploading' 
       });
 
       // Step 3: Create blockchain record
       toast.loading('Creating blockchain record...', { id: proofId });
       const blockchainRecord = await this.blockchainService.submitProof(
-        metadataResult.hash,
+        metadataHash,
         {
           title: submissionData.title,
           description: submissionData.description,
@@ -146,7 +108,7 @@ export class ProofSubmissionService {
       // Step 4: Sign the transaction if wallet is available
       if (signMessage) {
         try {
-          const message = `Proof submission: ${metadataResult.hash}`;
+          const message = `Proof submission: ${metadataHash}`;
           const signature = await signMessage(message);
           blockchainRecord.signature = signature;
         } catch (error) {
@@ -158,7 +120,7 @@ export class ProofSubmissionService {
       const completedProof: Proof = {
         ...initialProof,
         attachments: uploadedAttachments,
-        ipfsHash: metadataResult.hash,
+        ipfsHash: metadataHash,
         status: 'completed',
         blockchainRecord,
       };
@@ -212,23 +174,16 @@ export class ProofSubmissionService {
 
       if (attachment.file) {
         try {
-          // Check if IPFS is available
-          const ipfs = await getIPFSService();
-          if (ipfs && ipfs.isAvailable()) {
-            const result = await ipfs.uploadFile(attachment.file);
+          // Upload to Supabase Storage
+          const result = await fileUploadService.uploadFile(attachment.file, 'proofs');
+          if (result.success) {
             return {
               ...attachment,
-              ipfsHash: result.hash,
-              url: result.url,
+              ipfsHash: result.path || '',
+              url: result.url || '',
             };
           } else {
-            // Fallback: store file reference locally
-            console.warn('IPFS not available, using local storage for:', attachment.name);
-            return {
-              ...attachment,
-              ipfsHash: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              url: URL.createObjectURL(attachment.file),
-            };
+            throw new Error(`Failed to upload ${attachment.name}: ${result.error}`);
           }
         } catch (error) {
           console.error(`Failed to upload ${attachment.name}:`, error);

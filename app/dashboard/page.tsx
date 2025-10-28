@@ -24,7 +24,7 @@ import { Header } from '../components/Header';
 import { WalletConnect } from '../components/WalletConnect';
 import { PublicDataStats } from '../components/PublicDataStats';
 import { useAppStore } from '../../lib/store';
-import { proofService } from '../../lib/proof-service';
+import { proofService } from '../../lib/supabase-proof-service';
 
 export default function DashboardPage() {
   const { userProofs, connectedWallet, isLoading, loadUserProofs } = useAppStore();

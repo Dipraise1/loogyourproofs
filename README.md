@@ -1,341 +1,217 @@
-# SolGigs - Decentralized Freelancer Platform
+# SolGigs - Production-Ready Web3 Freelancer Platform
 
-![SolGigs](https://img.shields.io/badge/SolGigs-v1.0.0-purple)
-![Next.js](https://img.shields.io/badge/Next.js-14.0-black)
-![Solana](https://img.shields.io/badge/Solana-Web3-green)
-![IPFS](https://img.shields.io/badge/IPFS-Decentralized-blue)
-![2025 Design](https://img.shields.io/badge/Design-2025%20Trends-pink)
+A complete Web3 platform for freelancers to find gigs, create immutable proof-of-work portfolios, and build reputation on the blockchain. Users can connect their wallets, submit verified work evidence, earn client endorsements, and establish their Web3 reputation.
 
-A fully functional decentralized web application where freelancers can find gigs and log immutable proof-of-work submissions. Built with modern 2025 design trends featuring dark themes, purple accents, small refined typography, and cutting-edge Web3 functionality.
+## 🚀 Features
 
-## ✨ Features
+- **Wallet Integration**: Connect Phantom, MetaMask, and Solflare wallets
+- **Task Management**: Create, apply to, and complete social media tasks
+- **User Profiles**: Comprehensive freelancer profiles with specialties and social links
+- **Proof of Work**: Submit and verify work with blockchain records
+- **Real-time Updates**: Live notifications and status updates
+- **File Storage**: Supabase Storage for secure file uploads
+- **Multi-chain Support**: Solana and Ethereum blockchain integration
+- **Real Payments**: Actual crypto transactions on blockchain
+- **Production Ready**: Fully deployed and scalable
 
-### 🔐 **Web3 Wallet Integration**
-- **Multi-wallet Support**: Phantom, MetaMask, Solflare, and more
-- **Dual Blockchain**: Solana and Ethereum/EVM compatibility
-- **Auto-connect**: Seamless wallet connection and reconnection
+## 🛠️ Tech Stack
 
-### 📝 **Proof Submission System**
-- **Rich Content Upload**: Images, documents, GitHub links, live demos
-- **IPFS Storage**: Immutable content storage with redundant gateways
-- **Wallet Signatures**: Cryptographically signed proof submissions
-- **Metadata Management**: Structured proof information with tags and categories
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Blockchain**: Solana, Ethereum with real transactions
+- **Storage**: Supabase Storage for all file uploads
+- **State Management**: Zustand
+- **UI Components**: Framer Motion, Lucide React
+- **Deployment**: Vercel (production ready)
 
-### 🏆 **Client Endorsement System**
-- **Verifiable Endorsements**: On-chain client testimonials
-- **Reputation Building**: Accumulated endorsements increase credibility
-- **Transparent Reviews**: Public, immutable feedback system
+## 📋 Prerequisites
 
-### 🔍 **Discovery & Search**
-- **Freelancer Exploration**: Browse verified freelancer portfolios
-- **ENS/SNS Support**: Search by blockchain domain names
-- **Advanced Filtering**: By skills, rating, endorsements, and more
-- **Public Portfolios**: Transparent work history for all users
-
-### 🎨 **2025 Design Aesthetics**
-- **Dark Mode First**: Modern black backgrounds with purple accents
-- **Micro Typography**: Small, refined text following 2025 trends
-- **Glow Effects**: Sci-fi inspired UI with subtle animations
-- **Glass Morphism**: Translucent panels and backdrop blur
-- **Responsive Design**: Mobile-first with thumb-friendly navigation
+- Node.js 18+ and npm
+- Supabase account
+- Solana/Ethereum RPC endpoints
+- Web3 wallet (Phantom, MetaMask, Solflare)
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 1. Clone and Install
 
-- Node.js 18+ 
-- npm or yarn
-- Web3 wallet (Phantom, MetaMask, etc.)
-
-### Installation
-
-1. **Clone the repository**
 ```bash
-git clone git remote add origin https://github.com/Dipraise1/loogyourproofs.git
-cd saveyourproofs
-```
-
-2. **Install dependencies**
-```bash
+git clone <repository-url>
+cd loogyourproofs
 npm install
-# or
-yarn install
 ```
 
-3. **Set up environment variables**
-```bash
-cp .env.example .env.local
-```
+### 2. Set up Supabase
 
-Edit `.env.local` with your configuration:
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Run the SQL schema from `SUPABASE_SETUP.md` in your Supabase SQL Editor
+3. Get your project URL and anon key from Settings > API
+
+### 3. Environment Variables
+
+Create a `.env.local` file:
+
 ```env
-# IPFS Configuration (Optional - uses public gateways as fallback)
-NEXT_PUBLIC_INFURA_PROJECT_ID=your_infura_project_id
-NEXT_PUBLIC_INFURA_PROJECT_SECRET=your_infura_secret
+# Supabase Configuration (REQUIRED)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
-# Pinata (Alternative IPFS service - Recommended)
-NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
+# Solana Configuration (REQUIRED for Solana payments)
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
 
-# Blockchain Configuration
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-NEXT_PUBLIC_ETHEREUM_NETWORK=sepolia
+# Ethereum Configuration (REQUIRED for Ethereum payments)
+NEXT_PUBLIC_ETHEREUM_NETWORK=mainnet
+NEXT_PUBLIC_ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/your-infura-key
 ```
 
-### IPFS Configuration Options
+### 4. Run Development Server
 
-The app supports multiple IPFS providers with automatic fallback:
-
-1. **Pinata (Recommended)**: Get your JWT token from [Pinata](https://pinata.cloud/)
-2. **Infura**: Use your Infura project credentials  
-3. **Public Gateways**: Automatic fallback to public IPFS nodes
-
-**Priority Order**: Pinata → Infura → Public Gateway
-
-## 💾 Data Persistence
-
-The application features comprehensive data persistence:
-
-- **Automatic Saving**: All proof submissions and user data automatically save to localStorage
-- **Real-time Updates**: Statistics and portfolios update immediately after submissions
-- **Auto-onboarding**: New users are automatically created when wallets connect
-- **Session Recovery**: All data persists across browser sessions
-- **Sync on Startup**: Application automatically loads all stored data on initialization
-
-4. **Run the development server**
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-5. **Open your browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📖 Usage Guide
+## 📁 Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── components/         # Reusable UI components
+│   ├── dashboard/          # User dashboard
+│   ├── explore/            # Freelancer discovery
+│   ├── profile/            # User profile management
+│   ├── tasks/              # Task browsing
+│   ├── create-task/        # Task creation
+│   ├── task/[id]/          # Task detail pages
+│   └── submit/             # Proof submission
+├── lib/                    # Core business logic
+│   ├── hooks/              # Custom React hooks
+│   ├── store.ts            # Zustand state management
+│   ├── supabase.ts         # Supabase client
+│   ├── user-service.ts     # User management
+│   ├── task-service.ts     # Task management
+│   └── blockchain.ts       # Blockchain integration
+├── public/                 # Static assets
+└── SUPABASE_SETUP.md       # Database schema
+```
+
+## 🔧 Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Key Components
+
+- **WalletConnect**: Handles wallet connection and user authentication
+- **TaskService**: Manages task creation, applications, and completions
+- **UserService**: Handles user profiles and statistics
+- **SupabaseService**: Database operations and real-time updates
+
+## 🚀 Production Deployment
+
+See `PRODUCTION_DEPLOYMENT.md` for detailed production deployment instructions.
+
+### Quick Deploy to Vercel
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Login: `vercel login`
+3. Deploy: `vercel --prod`
+4. Set environment variables in Vercel dashboard
+
+### Production Features
+
+- ✅ **Real Crypto Payments**: Actual Solana/Ethereum transactions
+- ✅ **Supabase Storage**: Secure file uploads and storage
+- ✅ **Production Database**: Full PostgreSQL schema with RLS
+- ✅ **Wallet Integration**: Phantom, MetaMask, Solflare support
+- ✅ **Task Management**: Complete task lifecycle
+- ✅ **User Profiles**: Comprehensive freelancer profiles
+- ✅ **Real-time Updates**: Live notifications and status
+
+## 🎯 Usage
 
 ### For Freelancers
 
-1. **Connect Your Wallet**
-   - Click "Connect Wallet" and choose your preferred Web3 wallet
-   - Approve the connection request
-
-2. **Submit Your First Proof**
-   - Navigate to "Submit Proof" 
-   - Fill in project details, description, and tags
-   - Upload supporting files (images, documents, code)
-   - Add GitHub repository or live demo links
-   - Sign the transaction with your wallet
-
-3. **Build Your Portfolio**
-   - View all your submissions in the Dashboard
-   - Track verification status and endorsements
-   - Share your public portfolio link
+1. **Connect Wallet**: Link your Web3 wallet for authentication
+2. **Create Profile**: Set up your freelancer profile with specialties
+3. **Browse Tasks**: Find social media tasks that match your skills
+4. **Apply**: Submit applications with personalized messages
+5. **Complete Work**: Submit proof of completion
+6. **Build Reputation**: Earn endorsements and build your Web3 reputation
 
 ### For Clients
 
-1. **Explore Freelancers**
-   - Browse the "Explore" page to discover talent
-   - Search by skills, location, or ENS names
-   - View detailed portfolios and work history
+1. **Connect Wallet**: Link your Web3 wallet
+2. **Create Tasks**: Post social media engagement tasks
+3. **Review Applications**: Accept applications from qualified freelancers
+4. **Verify Completion**: Review and verify completed work
+5. **Make Payments**: Process payments through the platform
 
-2. **Endorse Quality Work**
-   - Connect your wallet as a client
-   - Find the freelancer's work you want to endorse
-   - Submit an on-chain endorsement with your feedback
+## 🔒 Security
 
-## 🏗️ Architecture
+- Wallet-based authentication
+- Row Level Security (RLS) in Supabase
+- Input validation and sanitization
+- Secure environment variable handling
+- CORS configuration
 
-### Frontend Stack
-- **Next.js 14**: React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first styling with custom 2025 design system
-- **Framer Motion**: Smooth animations and transitions
-- **Lucide React**: Modern icon library
+## 📊 Database Schema
 
-### Web3 Integration
-- **Solana Web3.js**: Solana blockchain interaction
-- **Wallet Adapter**: Multi-wallet connection management
-- **Ethers.js**: Ethereum blockchain integration (planned)
+The application uses the following main tables:
 
-### Storage & Data
-- **IPFS**: Decentralized file storage
-- **Pinata/Infura**: IPFS gateway services
-- **Smart Contracts**: On-chain proof records (Solana/Ethereum)
+- **users**: User profiles and authentication
+- **tasks**: Task listings and details
+- **task_applications**: User applications to tasks
+- **task_completions**: Completed work verification
+- **proofs**: Proof-of-work submissions
+- **notifications**: Real-time user notifications
 
-### Design System
-```css
-/* 2025 Color Palette */
---dark-900: #0a0a0b     /* Primary background */
---dark-800: #111113     /* Secondary background */
---purple-400: #a78bfa   /* Digital Lavender accent */
---mocha: #a47864        /* Pantone 2025 Color */
---neon-purple: #bf7fff  /* Glow effects */
-
-/* Typography Scale (Small text trend) */
---text-xs: 0.65rem      /* 10.4px */
---text-sm: 0.75rem      /* 12px */
---text-base: 0.825rem   /* 13.2px */
-```
-
-## 🔧 API Reference
-
-### IPFS Service
-```typescript
-import { ipfsService } from '@/lib/ipfs';
-
-// Upload a file
-const result = await ipfsService.uploadFile(file);
-
-// Upload proof metadata
-const metadata = await ipfsService.uploadProofMetadata({
-  title: "My Project",
-  description: "Project description",
-  // ... other fields
-});
-```
-
-### Blockchain Service
-```typescript
-import { blockchainService } from '@/lib/blockchain';
-
-// Submit proof to blockchain
-const proof = await blockchainService.submitProof(ipfsHash, metadata);
-
-// Get proofs by wallet
-const proofs = await blockchainService.getProofsByWallet(walletAddress);
-```
-
-## 🧪 Smart Contracts
-
-### Solana Program Structure
-```rust
-// Program instructions
-pub enum ProofInstruction {
-    SubmitProof {
-        ipfs_hash: String,
-        metadata_hash: String,
-    },
-    EndorseProof {
-        proof_id: String,
-        message: String,
-    },
-}
-```
-
-### Ethereum Contract Interface
-```solidity
-contract SaveYourProofs {
-    struct Proof {
-        address freelancer;
-        string ipfsHash;
-        uint256 timestamp;
-        bytes signature;
-    }
-    
-    function submitProof(string memory _ipfsHash) external;
-    function endorseProof(uint256 _proofId, string memory _message) external;
-}
-```
-
-## 🎨 Design Guidelines
-
-### 2025 UI Principles
-- **Minimalist Aesthetic**: Clean, uncluttered interfaces
-- **Micro Typography**: Smaller, refined text for modern feel
-- **Dark Mode Priority**: Black backgrounds with purple accents
-- **Subtle Animations**: Smooth, purposeful motion design
-- **Glass Effects**: Translucent panels with backdrop blur
-- **Glow Elements**: Sci-fi inspired hover and focus states
-
-### Component Examples
-```jsx
-// Neon Button with 2025 styling
-<button className="neon-button-primary">
-  Submit Proof
-</button>
-
-// Glass panel with backdrop blur
-<div className="glass-panel-strong">
-  Content here
-</div>
-
-// Glow text effect
-<h1 className="glow-text">SaveYourProofs</h1>
-```
-
-## 🔐 Security
-
-- **Wallet Signatures**: All proofs are cryptographically signed
-- **IPFS Immutability**: Content cannot be modified once uploaded
-- **On-chain Verification**: Blockchain provides tamper-proof records
-- **Client-side Encryption**: Sensitive data never leaves your device unencrypted
-
-## 🌐 Browser Support
-
-| Browser | Support |
-|---------|---------|
-| Chrome | ✅ Full |
-| Firefox | ✅ Full |
-| Safari | ✅ Full |
-| Edge | ✅ Full |
-| Mobile Safari | ✅ Full |
-| Chrome Mobile | ✅ Full |
+See `SUPABASE_SETUP.md` for complete schema details.
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Submit a pull request
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🚧 Roadmap
+## 🆘 Support
 
-### Phase 1 - Core Platform (Current)
-- [x] Wallet connection (Solana/Ethereum)
-- [x] IPFS integration
-- [x] Proof submission system
-- [x] 2025 design implementation
-- [ ] Smart contract deployment
+- **Documentation**: Check the `/docs` folder for detailed guides
+- **Issues**: Report bugs and request features via GitHub Issues
+- **Discord**: Join our community for support and discussions
 
-### Phase 2 - Enhanced Features
-- [ ] ENS/SNS domain integration
+## 🔮 Roadmap
+
+- [x] Payment integration with crypto wallets
+- [x] Real blockchain transactions
+- [x] Supabase Storage integration
+- [x] Production-ready deployment
 - [ ] Advanced search and filtering
-- [ ] Reputation scoring algorithm
-- [ ] Mobile app (React Native)
+- [ ] Mobile app development
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] Smart contract integration
+- [ ] NFT-based achievements
+- [ ] Decentralized governance
 
-### Phase 3 - Platform Expansion
-- [ ] Multi-chain support (Polygon, Arbitrum)
-- [ ] NFT proof certificates
-- [ ] Freelancer marketplace integration
-- [ ] API for third-party platforms
+## 🙏 Acknowledgments
 
-## 💬 Community
-
-- **Discord**: [Join our community](https://discord.gg/saveyourproofs)
-- **Twitter**: [@SaveYourProofs](https://twitter.com/saveyourproofs)
-- **Telegram**: [SaveYourProofs Chat](https://t.me/saveyourproofs)
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. Check our [FAQ](docs/FAQ.md)
-2. Search [existing issues](https://github.com/yourusername/saveyourproofs/issues)
-3. Create a [new issue](https://github.com/yourusername/saveyourproofs/issues/new)
-4. Join our Discord for real-time help
+- Solana Labs for wallet adapter
+- Supabase for backend infrastructure
+- Vercel for deployment platform
+- The Web3 community for inspiration
 
 ---
 
-**Built with ❤️ by freelancers, for freelancers.**
-
-*"Your work, your proof, your reputation - all secured on the blockchain."* # loogyourproofs
-
-Last updated: 2024-12-19
+**Built with ❤️ for the decentralized future of freelancing**

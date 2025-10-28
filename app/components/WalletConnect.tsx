@@ -7,12 +7,13 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAppStore } from '../../lib/store';
+import { userService } from '../../lib/user-service';
 import '../utils/phantomErrorSuppress'; // Auto-suppress Phantom errors
 
 export function WalletConnect() {
   const { wallet, connecting, connected, disconnect, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
-  const { setConnectedWallet } = useAppStore();
+  const { setConnectedWallet, setCurrentUser } = useAppStore();
   const [isEthereumConnected, setIsEthereumConnected] = useState(false);
   const [isEthConnecting, setIsEthConnecting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -23,20 +24,31 @@ export function WalletConnect() {
   const lastSolanaState = useRef<{ connected: boolean; publicKey: string | null }>({ connected: false, publicKey: null });
 
   // Ethereum event handler with stable reference
-  const handleEthAccountsChanged = useCallback((accounts: string[]) => {
+  const handleEthAccountsChanged = useCallback(async (accounts: string[]) => {
     console.log('Ethereum accounts changed:', accounts);
     if (accounts.length > 0) {
       setIsEthereumConnected(true);
       setConnectedWallet(accounts[0], 'metamask');
       localStorage.setItem('lastConnectedWallet', 'ethereum');
       localStorage.setItem('ethAccount', accounts[0]);
+      
+      // Initialize user session
+      try {
+        const user = await userService.initializeUserSession(accounts[0], 'metamask');
+        if (user) {
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error('Failed to initialize user session:', error);
+      }
     } else {
       setIsEthereumConnected(false);
       setConnectedWallet(null, null);
+      setCurrentUser(null);
       localStorage.removeItem('lastConnectedWallet');
       localStorage.removeItem('ethAccount');
     }
-  }, [setConnectedWallet]);
+  }, [setConnectedWallet, setCurrentUser]);
 
   // Single initialization effect - runs once with strong guards
   useEffect(() => {
@@ -129,10 +141,22 @@ export function WalletConnect() {
           if (connected && publicKey && !isEthereumConnected) {
             setConnectedWallet(publicKey.toBase58(), 'phantom');
             localStorage.setItem('lastConnectedWallet', 'solana');
+            
+            // Initialize user session
+            userService.initializeUserSession(publicKey.toBase58(), 'phantom')
+              .then(user => {
+                if (user) {
+                  setCurrentUser(user);
+                }
+              })
+              .catch(error => {
+                console.error('Failed to initialize user session:', error);
+              });
           } else if (!connected && !isEthereumConnected) {
             const savedWalletType = localStorage.getItem('lastConnectedWallet');
             if (savedWalletType === 'solana') {
               setConnectedWallet(null, null);
+              setCurrentUser(null);
               localStorage.removeItem('lastConnectedWallet');
             }
           }
@@ -186,6 +210,16 @@ export function WalletConnect() {
         localStorage.setItem('lastConnectedWallet', 'ethereum');
         localStorage.setItem('ethAccount', accounts[0]);
         
+        // Initialize user session
+        try {
+          const user = await userService.initializeUserSession(accounts[0], 'metamask');
+          if (user) {
+            setCurrentUser(user);
+          }
+        } catch (error) {
+          console.error('Failed to initialize user session:', error);
+        }
+        
         // Set up event listener
         if (ethListenerRef.current) {
           window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
@@ -204,6 +238,7 @@ export function WalletConnect() {
   const handleEthereumDisconnect = useCallback(() => {
     setIsEthereumConnected(false);
     setConnectedWallet(null, null);
+    setCurrentUser(null);
     localStorage.removeItem('lastConnectedWallet');
     localStorage.removeItem('ethAccount');
     
@@ -212,7 +247,7 @@ export function WalletConnect() {
       window.ethereum.removeListener('accountsChanged', ethListenerRef.current);
       ethListenerRef.current = null;
     }
-  }, []); // Remove setConnectedWallet from deps
+  }, [setConnectedWallet, setCurrentUser]);
 
   const handleSolanaDisconnect = async () => {
     try {
@@ -220,11 +255,13 @@ export function WalletConnect() {
       await new Promise(resolve => setTimeout(resolve, 100));
       await disconnect();
       setConnectedWallet(null, null);
+      setCurrentUser(null);
       localStorage.removeItem('lastConnectedWallet');
     } catch (error) {
       console.warn('Phantom disconnect communication issue (expected):', error instanceof Error ? error.message : error);
       // Force cleanup even if disconnect fails due to service worker issues
       setConnectedWallet(null, null);
+      setCurrentUser(null);
       localStorage.removeItem('lastConnectedWallet');
     }
   };
